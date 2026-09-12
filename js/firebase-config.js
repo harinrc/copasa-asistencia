@@ -18,6 +18,9 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-// Long polling en vez de streaming WebChannel: evita que firewalls/antivirus
-// aborten las conexiones y las escrituras se queden colgadas sin avisar.
-export const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+// Long polling forzado: algunas redes/antivirus cortan el streaming normal de
+// Firestore (WebChannel) a medio camino; forzarlo evita conexiones colgadas.
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+  useFetchStreams: false
+});
