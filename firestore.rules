@@ -1,0 +1,59 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function estaAutenticado() {
+      return request.auth != null;
+    }
+
+    function esAdmin() {
+      return estaAutenticado() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    // Perfiles de usuario: cada quien lee/crea el suyo; solo admin edita roles ajenos
+    match /users/{userId} {
+      allow read: if estaAutenticado();
+      allow create: if estaAutenticado() && request.auth.uid == userId;
+      allow update: if estaAutenticado() && (request.auth.uid == userId || esAdmin());
+    }
+
+    // Bandera interna para saber si ya existe un primer usuario (admin inicial)
+    match /meta/{doc} {
+      allow read: if estaAutenticado();
+      allow write: if estaAutenticado();
+    }
+
+    // Empleados: todos autenticados leen; solo admin escribe
+    match /empleados/{empId} {
+      allow read: if estaAutenticado();
+      allow write: if esAdmin();
+    }
+
+    // Registros diarios (banco de horas): todos autenticados leen; solo admin escribe
+    match /registros/{regId} {
+      allow read: if estaAutenticado();
+      allow write: if esAdmin();
+    }
+
+    // Temporadas (periodos de pago de horas extra): todos leen; solo admin escribe
+    match /temporadas/{temporadaId} {
+      allow read: if estaAutenticado();
+      allow write: if esAdmin();
+    }
+
+    // Feriados (fechas puntuales que se pagan como extra): todos leen; solo admin escribe
+    match /feriados/{feriadoId} {
+      allow read: if estaAutenticado();
+      allow write: if esAdmin();
+    }
+
+    // Configuración global del horario estándar: todos leen; solo admin escribe
+    match /config/{configId} {
+      allow read: if estaAutenticado();
+      allow write: if esAdmin();
+    }
+  }
+}

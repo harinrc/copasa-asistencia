@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard · Control de Asistencia COPASA</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-brand">
+      <h1>COPASA · Bodega</h1>
+      <span>Control de Asistencia y Banco de Horas</span>
+    </div>
+    <div class="topbar-user">
+      <span id="user-email"></span>
+      <span id="user-role" class="badge"></span>
+      <button id="logout-btn">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- Configuración de horario y temporada -->
+    <section class="card admin-only">
+      <div class="card-header">
+        <h2>Configuración</h2>
+      </div>
+      <div class="filters">
+        <div>
+          <label for="cfg-entrada">Hora de entrada (lunes-viernes)</label>
+          <input type="time" id="cfg-entrada" value="08:00" />
+        </div>
+        <div>
+          <label for="cfg-salida">Hora de salida (lunes-viernes)</label>
+          <input type="time" id="cfg-salida" value="17:00" />
+        </div>
+        <div>
+          <label for="cfg-entrada-sabado">Hora de entrada (sábado)</label>
+          <input type="time" id="cfg-entrada-sabado" value="08:00" />
+        </div>
+        <div>
+          <label for="cfg-salida-sabado">Hora de salida (sábado)</label>
+          <input type="time" id="cfg-salida-sabado" value="12:00" />
+        </div>
+        <button id="btn-guardar-config" class="btn-secondary">Guardar horario</button>
+      </div>
+
+      <div class="card-header" style="margin-top:1.25rem;">
+        <h3 style="margin:0;">Temporadas (pago de horas extra en vez de banco)</h3>
+        <button id="btn-nueva-temporada" class="btn-primary">+ Nueva temporada</button>
+      </div>
+      <table class="data-table" id="tabla-temporadas">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Desde</th>
+            <th>Hasta</th>
+            <th>Activa</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="card-header" style="margin-top:1.25rem;">
+        <h3 style="margin:0;">Feriados (día trabajado se paga como extra)</h3>
+        <button id="btn-nuevo-feriado" class="btn-primary">+ Nuevo feriado</button>
+      </div>
+      <table class="data-table" id="tabla-feriados">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Nombre</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Periodo de reporte -->
+    <section class="card">
+      <h2>Periodo de reporte</h2>
+      <div class="filters">
+        <div>
+          <label for="fecha-inicio">Desde</label>
+          <input type="date" id="fecha-inicio" />
+        </div>
+        <div>
+          <label for="fecha-fin">Hasta</label>
+          <input type="date" id="fecha-fin" />
+        </div>
+        <button id="btn-exportar" class="btn-secondary">Exportar a Excel</button>
+      </div>
+    </section>
+
+    <!-- Gestión de empleados -->
+    <section class="card" id="empleados-section">
+      <div class="card-header">
+        <h2>Empleados</h2>
+        <button id="btn-nuevo-empleado" class="btn-primary admin-only">+ Nuevo empleado</button>
+      </div>
+      <table class="data-table" id="tabla-empleados">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Cargo</th>
+            <th>Saldo inicial (banco)</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Registro diario (equivalente a la hoja del día en el Excel) -->
+    <section class="card">
+      <div class="card-header">
+        <h2>Registro diario</h2>
+        <div>
+          <label for="registro-fecha">Fecha</label>
+          <input type="date" id="registro-fecha" />
+        </div>
+      </div>
+      <p id="temporada-indicador" class="auth-hint" style="text-align:left;margin:0.5rem 0;"></p>
+      <table class="data-table" id="tabla-registro-diario">
+        <thead>
+          <tr>
+            <th>Cargo</th>
+            <th>Nombre</th>
+            <th>Tipo de día</th>
+            <th>Entrada</th>
+            <th>Salida</th>
+            <th>Llegada tarde</th>
+            <th>Hrs. acum. entrada</th>
+            <th>Hrs. acum. salida</th>
+            <th>Hrs. extra pagadas</th>
+            <th>Total banco</th>
+            <th>Observaciones</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Reporte de acumulado (banco de horas) -->
+    <section class="card">
+      <h2>Reporte de acumulado (banco de horas)</h2>
+      <table class="data-table" id="tabla-banco">
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Saldo inicial</th>
+            <th>Ganado en periodo</th>
+            <th>Gastado en periodo</th>
+            <th>Saldo final</th>
+            <th>Días disponibles</th>
+            <th>Días gozados</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Reporte de horas deducidas del banco -->
+    <section class="card">
+      <h2>Reporte de horas deducidas (a cuenta de acumulado)</h2>
+      <table class="data-table" id="tabla-deducidas">
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Fecha</th>
+            <th>Horas deducidas</th>
+            <th>Observaciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- Modal genérico -->
+  <div id="modal-overlay" class="modal-overlay" hidden>
+    <div class="modal">
+      <h3 id="modal-title"></h3>
+      <div id="modal-body"></div>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn-secondary">Cancelar</button>
+        <button id="modal-confirm" class="btn-primary">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
