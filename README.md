@@ -70,7 +70,7 @@ a Excel para enviar el reporte a Recursos Humanos.
 ## 1. Crear el proyecto en Firebase
 
 1. Ve a https://console.firebase.google.com y crea un proyecto nuevo (por
-   ejemplo `copasa-asistencia`).
+   ejemplo `asistencia-copasa`).
 2. En el menú lateral entra a **Compilación > Authentication** →
    pestaña **Sign-in method** → habilita **Correo electrónico/contraseña**.
 3. En **Compilación > Authentication > Users**, crea manualmente el primer
