@@ -8,12 +8,12 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-aut
 import { initializeFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB00GyDS3BXLZsVBilk9PgbslTpO5jGIns",
-  authDomain: "copasa-asistencia.firebaseapp.com",
-  projectId: "copasa-asistencia",
-  storageBucket: "copasa-asistencia.firebasestorage.app",
-  messagingSenderId: "978760123021",
-  appId: "1:978760123021:web:c63f37cd2ee9c9fec258c4"
+  apiKey: "AIzaSyBVe3Km1eY9nzZj5wa7yXrSciR7_GIHjtw",
+  authDomain: "asistencia-copasa.firebaseapp.com",
+  projectId: "asistencia-copasa",
+  storageBucket: "asistencia-copasa.firebasestorage.app",
+  messagingSenderId: "487236491243",
+  appId: "1:487236491243:web:1ddf519b53ad068c826bae"
 };
 
 const app = initializeApp(firebaseConfig);
