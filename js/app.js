@@ -25,6 +25,11 @@ const MESES_LARGOS = [
   "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
   "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
 ];
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+function etiquetaFecha(fechaStr) {
+  const [, mes, dia] = fechaStr.split("-").map(Number);
+  return `${dia}-${MESES_CORTOS[mes - 1]}`;
+}
 
 // Color de franja para cada tipo de día especial (igual estilo que el Excel original)
 const COLOR_TIPO_ESPECIAL = {
@@ -384,12 +389,34 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
     return { nombre: nombreHoja, titulo, columnas: COLUMNAS_REGISTRO_DIARIO, filas };
   });
 
+  // Igual que las páginas "Acumuladas"/"Deducidas": una fila por colaborador
+  // y una columna por cada día del periodo, mostrando cuánto se ganó o
+  // dedujo del control de horas ese día puntual.
+  function celdaAcumuladoTexto(reg) {
+    if (!reg) return "—";
+    switch (reg.tipo) {
+      case "subsidio": return "SUB";
+      case "falta": return "FALTA";
+      case "permiso": return "PERM";
+      case "vacaciones": return "VAC";
+      case "a_cuenta_acumulado": return `-${formatoHHMM(reg.horasDeducidasBanco || 0)}`;
+      default: {
+        const g = gananciaBanco(reg);
+        return g > 0 ? formatoHHMM(g) : "00:00";
+      }
+    }
+  }
+  function celdaDeducidaTexto(reg) {
+    if (!reg || !(reg.horasDeducidasBanco > 0)) return "—";
+    return formatoHHMM(reg.horasDeducidasBanco);
+  }
+
   const filasBanco = empleados.map(emp => {
     const propios = enPeriodo.filter(r => r.employeeId === emp.id);
     const ganadoPeriodo = round2(propios.reduce((a, r) => a + gananciaBanco(r), 0));
     const gastadoPeriodo = round2(propios.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
     const saldoFinal = calcularBancoEmpleado(emp, hasta);
-    return {
+    const fila = {
       "Empleado": emp.nombre,
       "Cargo": emp.cargo || "",
       "Saldo inicial": formatoHHMM(emp.saldoInicialHoras || 0),
@@ -399,19 +426,19 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       "Días disponibles": formatoDiasHoras(saldoFinal),
       "Días gozados en periodo": propios.filter(r => r.tipo === "a_cuenta_acumulado").length
     };
+    fechasPeriodo.forEach(f => {
+      fila[etiquetaFecha(f)] = celdaAcumuladoTexto(registros.find(r => r.employeeId === emp.id && r.fecha === f));
+    });
+    return fila;
   });
 
-  const filasDeducidas = enPeriodo
-    .filter(r => (r.horasDeducidasBanco || 0) > 0)
-    .map(r => {
-      const emp = empleados.find(e => e.id === r.employeeId);
-      return {
-        "Empleado": emp ? emp.nombre : r.employeeNombre || "",
-        "Fecha": r.fecha,
-        "Horas deducidas": formatoHHMM(r.horasDeducidasBanco || 0),
-        "Observaciones": r.observaciones || ""
-      };
+  const filasDeducidas = empleados.map(emp => {
+    const fila = { "Empleado": emp.nombre, "Cargo": emp.cargo || "" };
+    fechasPeriodo.forEach(f => {
+      fila[etiquetaFecha(f)] = celdaDeducidaTexto(registros.find(r => r.employeeId === emp.id && r.fecha === f));
     });
+    return fila;
+  });
 
   const nombreArchivo = `Reporte_Asistencia_${desde || "inicio"}_a_${hasta || "hoy"}.xlsx`;
   const textoOriginal = btn.textContent;
