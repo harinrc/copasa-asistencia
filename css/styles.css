@@ -108,6 +108,36 @@ body {
   font-size: 0.75rem;
 }
 
+.topbar-nav {
+  display: flex;
+  gap: 1.25rem;
+}
+.topbar-nav a {
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 2px solid transparent;
+}
+.topbar-nav a:hover { color: #fff; }
+.topbar-nav a.active {
+  color: #fff;
+  border-bottom-color: #10b981;
+  font-weight: 600;
+}
+
+.fecha-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fecha-nav label { font-size: 0.8rem; }
+.fecha-nav input {
+  padding: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
 .container {
   max-width: 1200px;
   margin: 1.5rem auto;
@@ -170,6 +200,44 @@ body {
 }
 .data-table th { background: #f9fafb; }
 .data-table tr:hover { background: #f9fafb; }
+
+/* ---------- Cuadrícula día por día (reportes.html) ---------- */
+.grid-scroll {
+  overflow-x: auto;
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.grid-table {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.grid-table th, .grid-table td {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+}
+.grid-table thead th {
+  background: #f3f4f6;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.grid-table td:first-child, .grid-table th:first-child {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  text-align: left;
+  z-index: 1;
+  min-width: 170px;
+}
+.grid-table thead th:first-child { z-index: 2; background: #f3f4f6; }
+.grid-table td.celda-normal { color: #1f2937; }
+.grid-table td.celda-vacia { color: #d1d5db; }
+.grid-table td.celda-deduccion { color: var(--danger); font-weight: 600; }
+.grid-table td.celda-especial { color: #6b7280; font-style: italic; }
+.grid-table td.resumen { background: #f9fafb; font-weight: 600; }
 
 .icon-btn {
   border: none;

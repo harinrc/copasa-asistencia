@@ -12,6 +12,10 @@
       <h1>COPASA · Bodega</h1>
       <span>Control de Asistencia y Banco de Horas</span>
     </div>
+    <nav class="topbar-nav">
+      <a href="dashboard.html" class="active">Registro diario</a>
+      <a href="reportes.html">Reportes detallados</a>
+    </nav>
     <div class="topbar-user">
       <span id="user-email"></span>
       <span id="user-role" class="badge"></span>
@@ -119,9 +123,12 @@
     <section class="card">
       <div class="card-header">
         <h2>Registro diario</h2>
-        <div>
+        <div class="fecha-nav">
+          <button id="btn-dia-anterior" class="btn-secondary" title="Día anterior">←</button>
           <label for="registro-fecha">Fecha</label>
           <input type="date" id="registro-fecha" />
+          <button id="btn-dia-siguiente" class="btn-secondary" title="Día siguiente">→</button>
+          <button id="btn-dia-hoy" class="btn-secondary">Hoy</button>
         </div>
       </div>
       <p id="temporada-indicador" class="auth-hint" style="text-align:left;margin:0.5rem 0;"></p>
@@ -148,7 +155,10 @@
 
     <!-- Reporte de acumulado (banco de horas) -->
     <section class="card">
-      <h2>Reporte de acumulado (banco de horas)</h2>
+      <div class="card-header">
+        <h2>Reporte de acumulado (banco de horas)</h2>
+        <a href="reportes.html" class="btn-secondary" style="text-decoration:none;">Ver detalle día por día →</a>
+      </div>
       <table class="data-table" id="tabla-banco">
         <thead>
           <tr>

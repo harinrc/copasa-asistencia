@@ -220,6 +220,31 @@ document.getElementById("registro-fecha").addEventListener("change", () => {
   renderTemporadaIndicador();
 });
 
+function sumarDias(fechaStr, dias) {
+  const fecha = new Date(`${fechaStr}T00:00:00`);
+  fecha.setDate(fecha.getDate() + dias);
+  return fecha.toISOString().slice(0, 10);
+}
+
+document.getElementById("btn-dia-anterior").addEventListener("click", () => {
+  const input = document.getElementById("registro-fecha");
+  input.value = sumarDias(getFechaRegistro(), -1);
+  renderRegistroDiario();
+  renderTemporadaIndicador();
+});
+document.getElementById("btn-dia-siguiente").addEventListener("click", () => {
+  const input = document.getElementById("registro-fecha");
+  input.value = sumarDias(getFechaRegistro(), 1);
+  renderRegistroDiario();
+  renderTemporadaIndicador();
+});
+document.getElementById("btn-dia-hoy").addEventListener("click", () => {
+  const input = document.getElementById("registro-fecha");
+  input.value = new Date().toISOString().slice(0, 10);
+  renderRegistroDiario();
+  renderTemporadaIndicador();
+});
+
 function getFechaRegistro() {
   const input = document.getElementById("registro-fecha");
   if (!input.value) input.value = new Date().toISOString().slice(0, 10);
