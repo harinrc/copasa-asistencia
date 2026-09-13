@@ -1,4 +1,5 @@
-// Lógica principal del dashboard: autenticación, banco de horas en tiempo real y exportación
+// Dashboard: gestión de empleados, resumen del banco de horas y exportación.
+// El horario, temporadas, feriados y registro diario viven en sus propias páginas.
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
@@ -9,11 +10,8 @@ import { formatoHHMM, parseHHMM, formatoDiasHoras, fechaLocalHoy } from "./forma
 
 let currentUser = null;
 let isAdmin = false;
-let empleados = [];   // caché local en tiempo real
-let registros = [];   // registros diarios (asistencia + banco de horas)
-let temporadas = [];  // rangos de fechas en los que las horas extra se pagan en vez de acumularse
-let feriados = [];    // fechas puntuales trabajadas que siempre se pagan como extra
-let horario = { entrada: "08:00", salida: "17:00", entradaSabado: "08:00", salidaSabado: "12:00" }; // horario estándar configurable
+let empleados = [];
+let registros = [];
 
 const ETIQUETAS_TIPO = {
   normal: "Normal", subsidio: "Subsidio (INSS)", a_cuenta_acumulado: "A cuenta de acumulado",
@@ -57,141 +55,13 @@ function iniciarListeners() {
   onSnapshot(query(collection(db, "empleados"), orderBy("nombre")), (snap) => {
     empleados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderEmpleados();
-    renderRegistroDiario();
     renderBanco();
   });
 
   onSnapshot(query(collection(db, "registros"), orderBy("fecha", "desc")), (snap) => {
     registros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderRegistroDiario();
     renderBanco();
     renderDeducidas();
-  });
-
-  onSnapshot(query(collection(db, "temporadas"), orderBy("fechaInicio", "desc")), (snap) => {
-    temporadas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderTemporadas();
-    renderTemporadaIndicador();
-  });
-
-  onSnapshot(query(collection(db, "feriados"), orderBy("fecha", "desc")), (snap) => {
-    feriados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderFeriados();
-    renderTemporadaIndicador();
-  });
-
-  onSnapshot(doc(db, "config", "horario"), (snap) => {
-    if (snap.exists()) {
-      horario = {
-        entrada: snap.data().entrada || "08:00",
-        salida: snap.data().salida || "17:00",
-        entradaSabado: snap.data().entradaSabado || "08:00",
-        salidaSabado: snap.data().salidaSabado || "12:00"
-      };
-      document.getElementById("cfg-entrada").value = horario.entrada;
-      document.getElementById("cfg-salida").value = horario.salida;
-      document.getElementById("cfg-entrada-sabado").value = horario.entradaSabado;
-      document.getElementById("cfg-salida-sabado").value = horario.salidaSabado;
-    }
-    renderTemporadaIndicador();
-  });
-}
-
-// ---------------- Configuración de horario ----------------
-document.getElementById("btn-guardar-config").addEventListener("click", async () => {
-  const entrada = document.getElementById("cfg-entrada").value;
-  const salida = document.getElementById("cfg-salida").value;
-  const entradaSabado = document.getElementById("cfg-entrada-sabado").value;
-  const salidaSabado = document.getElementById("cfg-salida-sabado").value;
-  await setDoc(doc(db, "config", "horario"), { entrada, salida, entradaSabado, salidaSabado });
-});
-
-// ---------------- Feriados ----------------
-function esFeriado(fecha) {
-  return feriados.some(f => f.fecha === fecha);
-}
-
-function renderFeriados() {
-  const tbody = document.querySelector("#tabla-feriados tbody");
-  tbody.innerHTML = "";
-  feriados.forEach(f => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${f.fecha}</td>
-      <td>${escapeHtml(f.nombre || "")}</td>
-      <td><button class="icon-btn delete" data-action="delete-feriado" data-id="${f.id}">🗑️</button></td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-document.getElementById("btn-nuevo-feriado").addEventListener("click", () => {
-  const html = `
-    ${campo("f-fecha-feriado", "Fecha", "date", fechaLocalHoy())}
-    ${campo("f-nombre-feriado", "Nombre (ej. Día de la Independencia)", "text", "")}
-  `;
-  abrirModal("Nuevo feriado", html, async () => {
-    const fecha = document.getElementById("f-fecha-feriado").value;
-    const nombre = document.getElementById("f-nombre-feriado").value.trim();
-    if (!fecha) return alert("La fecha es obligatoria.");
-    await addDoc(collection(db, "feriados"), { fecha, nombre });
-    cerrarModal();
-  });
-});
-
-// ---------------- Temporadas ----------------
-function esTemporada(fecha) {
-  return temporadas.some(t => t.activa && fecha >= t.fechaInicio && fecha <= t.fechaFin);
-}
-
-function renderTemporadas() {
-  const tbody = document.querySelector("#tabla-temporadas tbody");
-  tbody.innerHTML = "";
-  temporadas.forEach(t => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(t.nombre)}</td>
-      <td>${t.fechaInicio}</td>
-      <td>${t.fechaFin}</td>
-      <td>${t.activa ? "Sí" : "No"}</td>
-      <td>
-        <button class="icon-btn edit" data-action="edit-temporada" data-id="${t.id}">✏️</button>
-        <button class="icon-btn delete" data-action="delete-temporada" data-id="${t.id}">🗑️</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-function renderTemporadaIndicador() {
-  const fecha = document.getElementById("registro-fecha").value;
-  const el = document.getElementById("temporada-indicador");
-  if (!fecha || !el) return;
-  el.textContent = esTemporada(fecha)
-    ? "⚠️ Esta fecha está en temporada: las horas después del horario se pagan como extra (no se acumulan al banco)."
-    : "Fuera de temporada: las horas después del horario se acumulan al banco de horas.";
-}
-
-document.getElementById("btn-nueva-temporada").addEventListener("click", () => abrirFormTemporada());
-
-function abrirFormTemporada(t = null) {
-  const html = `
-    ${campo("f-nombre-temp", "Nombre", "text", t?.nombre || "")}
-    ${campo("f-inicio-temp", "Desde", "date", t?.fechaInicio || "")}
-    ${campo("f-fin-temp", "Hasta", "date", t?.fechaFin || "")}
-    <div class="modal-body-field">
-      <label><input type="checkbox" id="f-activa-temp" ${!t || t.activa ? "checked" : ""} /> Activa</label>
-    </div>
-  `;
-  abrirModal(t ? "Editar temporada" : "Nueva temporada", html, async () => {
-    const data = {
-      nombre: document.getElementById("f-nombre-temp").value.trim(),
-      fechaInicio: document.getElementById("f-inicio-temp").value,
-      fechaFin: document.getElementById("f-fin-temp").value,
-      activa: document.getElementById("f-activa-temp").checked
-    };
-    if (!data.nombre || !data.fechaInicio || !data.fechaFin) return alert("Nombre y fechas son obligatorios.");
-    if (t) await updateDoc(doc(db, "temporadas", t.id), data);
-    else await addDoc(collection(db, "temporadas"), data);
-    cerrarModal();
   });
 }
 
@@ -215,119 +85,6 @@ function renderEmpleados() {
   document.querySelectorAll("#tabla-empleados .admin-only").forEach(el => el.style.display = isAdmin ? "" : "none");
 }
 
-// ---------------- Render: Registro diario ----------------
-document.getElementById("registro-fecha").addEventListener("change", () => {
-  renderRegistroDiario();
-  renderTemporadaIndicador();
-});
-
-function sumarDias(fechaStr, dias) {
-  const fecha = new Date(`${fechaStr}T00:00:00`);
-  fecha.setDate(fecha.getDate() + dias);
-  return fecha.toISOString().slice(0, 10);
-}
-
-document.getElementById("btn-dia-anterior").addEventListener("click", () => {
-  const input = document.getElementById("registro-fecha");
-  input.value = sumarDias(getFechaRegistro(), -1);
-  renderRegistroDiario();
-  renderTemporadaIndicador();
-});
-document.getElementById("btn-dia-siguiente").addEventListener("click", () => {
-  const input = document.getElementById("registro-fecha");
-  input.value = sumarDias(getFechaRegistro(), 1);
-  renderRegistroDiario();
-  renderTemporadaIndicador();
-});
-document.getElementById("btn-dia-hoy").addEventListener("click", () => {
-  const input = document.getElementById("registro-fecha");
-  input.value = fechaLocalHoy();
-  renderRegistroDiario();
-  renderTemporadaIndicador();
-});
-
-function getFechaRegistro() {
-  const input = document.getElementById("registro-fecha");
-  if (!input.value) input.value = fechaLocalHoy();
-  return input.value;
-}
-
-function renderRegistroDiario() {
-  const fecha = getFechaRegistro();
-  const tbody = document.querySelector("#tabla-registro-diario tbody");
-  tbody.innerHTML = "";
-  empleados.filter(e => e.activo !== false).forEach(emp => {
-    const reg = registros.find(r => r.employeeId === emp.id && r.fecha === fecha);
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(emp.cargo || "")}</td>
-      <td>${escapeHtml(emp.nombre)}</td>
-      <td>${ETIQUETAS_TIPO[reg?.tipo] || "—"}${reg?.modoDiaEspecial ? ` <span class="badge" style="background:${reg.modoDiaEspecial === "banco" ? "#0ea5e9" : "#f59e0b"};">${reg.modoDiaEspecial === "banco" ? "banco" : "salario"}</span>` : ""}</td>
-      <td>${reg?.horaEntrada || "—"}</td>
-      <td>${reg?.horaSalida || "—"}</td>
-      <td>${formatoHHMM(reg?.llegadaTardeHoras || 0)}</td>
-      <td>${formatoHHMM(reg?.horasAcumuladasEntrada || 0)}</td>
-      <td>${formatoHHMM(reg?.horasAcumuladasSalidas || 0)}</td>
-      <td>${formatoHHMM(reg?.horasExtraPagadas || 0)}</td>
-      <td>${formatoHHMM((reg?.horasAcumuladasEntrada || 0) + (reg?.horasAcumuladasSalidas || 0) - (reg?.horasDeducidasBanco || 0))}</td>
-      <td>${escapeHtml(reg?.observaciones || "")}</td>
-      <td>
-        <button class="icon-btn edit" data-action="editar-registro" data-emp="${emp.id}" data-fecha="${fecha}">✏️</button>
-        ${reg ? `<button class="icon-btn delete" data-action="eliminar-registro" data-id="${reg.id}">🗑️</button>` : ""}
-      </td>`;
-    tbody.appendChild(tr);
-  });
-  renderTemporadaIndicador();
-}
-
-// ---------------- Cálculo del día (banco de horas) ----------------
-function toMinutos(hhmm) {
-  if (!hhmm) return null;
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
-}
-
-function calcularDia({ horaEntrada, horaSalida, fecha, modoDiaEspecial }) {
-  const entrada = toMinutos(horaEntrada);
-  const salida = toMinutos(horaSalida);
-  if (entrada == null || salida == null) {
-    return { llegadaTardeHoras: 0, horasAcumuladasEntrada: 0, horasAcumuladasSalidas: 0, horasExtraPagadas: 0 };
-  }
-
-  const esDomingo = new Date(`${fecha}T00:00:00`).getDay() === 0;
-
-  // Feriado o domingo trabajado: no hay horario "estándar" ese día. Administración
-  // decide si esas horas se pagan como salario (por defecto) o se acumulan al banco.
-  if (esFeriado(fecha) || esDomingo) {
-    const horasTrabajadas = round2(Math.max(0, salida - entrada) / 60);
-    if (modoDiaEspecial === "banco") {
-      return { llegadaTardeHoras: 0, horasAcumuladasEntrada: 0, horasAcumuladasSalidas: horasTrabajadas, horasExtraPagadas: 0 };
-    }
-    return { llegadaTardeHoras: 0, horasAcumuladasEntrada: 0, horasAcumuladasSalidas: 0, horasExtraPagadas: horasTrabajadas };
-  }
-
-  const esSabado = new Date(`${fecha}T00:00:00`).getDay() === 6;
-  const entradaEst = toMinutos(esSabado ? horario.entradaSabado : horario.entrada);
-  const salidaEst = toMinutos(esSabado ? horario.salidaSabado : horario.salida);
-
-  const llegadaTardeHoras = round2(Math.max(0, entrada - entradaEst) / 60);
-  const horasAcumuladasEntrada = round2(Math.max(0, entradaEst - entrada) / 60);
-  const extraSalida = round2(Math.max(0, salida - salidaEst) / 60);
-  const enTemporada = esTemporada(fecha);
-  return {
-    llegadaTardeHoras,
-    horasAcumuladasEntrada,
-    horasAcumuladasSalidas: enTemporada ? 0 : extraSalida,
-    horasExtraPagadas: enTemporada ? extraSalida : 0
-  };
-}
-
-function esDiaEspecial(fecha) {
-  return esFeriado(fecha) || new Date(`${fecha}T00:00:00`).getDay() === 0;
-}
-
-function round2(n) { return Math.round(n * 100) / 100; }
-
 // ---------------- Modal genérico ----------------
 const overlay = document.getElementById("modal-overlay");
 const modalTitle = document.getElementById("modal-title");
@@ -349,13 +106,12 @@ btnConfirm.addEventListener("click", async () => {
   btnConfirm.disabled = true;
   const textoOriginal = btnConfirm.textContent;
   btnConfirm.textContent = "Guardando...";
-  const timeoutMs = 10000;
   try {
     await Promise.race([
       onConfirmCallback(),
       new Promise((_, reject) => setTimeout(() => reject(new Error(
         "Sin respuesta del servidor en 10s. Revisa tu conexión a internet o si un firewall/antivirus está bloqueando firestore.googleapis.com."
-      )), timeoutMs))
+      )), 10000))
     ]);
   } catch (err) {
     console.error(err);
@@ -384,26 +140,9 @@ document.addEventListener("click", async (e) => {
 
   if (btn.dataset.action === "edit-empleado") abrirFormEmpleado(empleados.find(x => x.id === id));
   if (btn.dataset.action === "delete-empleado") {
-    if (confirm("¿Eliminar este empleado? Esto no borra sus registros históricos.")) {
+    const emp = empleados.find(x => x.id === id);
+    if (confirm(`¿Eliminar a "${emp?.nombre}"? Esto NO borra sus registros diarios históricos, solo su ficha de empleado (deja de aparecer en el registro diario).`)) {
       await deleteDoc(doc(db, "empleados", id));
-    }
-  }
-  if (btn.dataset.action === "edit-temporada") abrirFormTemporada(temporadas.find(x => x.id === id));
-  if (btn.dataset.action === "delete-temporada") {
-    if (confirm("¿Eliminar esta temporada?")) await deleteDoc(doc(db, "temporadas", id));
-  }
-  if (btn.dataset.action === "delete-feriado") {
-    if (confirm("¿Eliminar este feriado?")) await deleteDoc(doc(db, "feriados", id));
-  }
-  if (btn.dataset.action === "editar-registro") {
-    const emp = empleados.find(x => x.id === btn.dataset.emp);
-    const fecha = btn.dataset.fecha;
-    const reg = registros.find(r => r.employeeId === emp.id && r.fecha === fecha);
-    abrirFormRegistro(emp, fecha, reg);
-  }
-  if (btn.dataset.action === "eliminar-registro") {
-    if (confirm("¿Eliminar este registro del día? El banco de horas se recalculará al instante.")) {
-      await deleteDoc(doc(db, "registros", id));
     }
   }
 });
@@ -430,87 +169,6 @@ function abrirFormEmpleado(emp = null) {
   });
 }
 
-// ---------------- Registro diario: alta/edición ----------------
-function abrirFormRegistro(emp, fecha, reg = null) {
-  const tipoActual = reg?.tipo || "normal";
-  const html = `
-    <p class="auth-hint" style="text-align:left;margin:0 0 0.5rem;"><strong>${escapeHtml(emp.nombre)}</strong> · ${fecha}</p>
-    <div class="modal-body-field">
-      <label for="f-tipo">Tipo de día</label>
-      <select id="f-tipo">
-        <option value="normal" ${tipoActual === "normal" ? "selected" : ""}>Normal (marca entrada/salida)</option>
-        <option value="subsidio" ${tipoActual === "subsidio" ? "selected" : ""}>Subsidio (INSS, no descuenta nada)</option>
-        <option value="a_cuenta_acumulado" ${tipoActual === "a_cuenta_acumulado" ? "selected" : ""}>A cuenta de acumulado / permiso autorizado</option>
-        <option value="falta" ${tipoActual === "falta" ? "selected" : ""}>Falta</option>
-        <option value="permiso" ${tipoActual === "permiso" ? "selected" : ""}>Permiso</option>
-        <option value="vacaciones" ${tipoActual === "vacaciones" ? "selected" : ""}>Vacaciones</option>
-      </select>
-    </div>
-    <div id="campos-normal" ${(tipoActual !== "normal" && tipoActual !== "subsidio") ? "hidden" : ""}>
-      ${campo("f-entrada", "Hora de entrada" , "time", reg?.horaEntrada || "")}
-      ${campo("f-salida", "Hora de salida (informativo si es subsidio)", "time", reg?.horaSalida || "")}
-      ${esDiaEspecial(fecha) ? `
-      <div class="modal-body-field">
-        <label for="f-modo-especial">Este día es domingo/feriado. ¿Cómo se paga lo trabajado?</label>
-        <select id="f-modo-especial">
-          <option value="pago" ${(!reg || reg.modoDiaEspecial !== "banco") ? "selected" : ""}>Pago de horas extra (salario)</option>
-          <option value="banco" ${reg?.modoDiaEspecial === "banco" ? "selected" : ""}>Horas acumuladas (banco)</option>
-        </select>
-      </div>` : ""}
-    </div>
-    <div id="campos-acuenta" ${tipoActual !== "a_cuenta_acumulado" ? "hidden" : ""}>
-      ${campo("f-horas-deducidas", "Horas a descontar del banco HH:MM (día completo = 08:00)", "text", formatoHHMM(reg?.horasDeducidasBanco ?? 8), 'placeholder="08:00" pattern="-?[0-9]+:[0-9]{2}"')}
-    </div>
-    <div class="modal-body-field">
-      <label for="f-notas">Observaciones</label>
-      <textarea id="f-notas" rows="2">${escapeHtml(reg?.observaciones || "")}</textarea>
-    </div>
-  `;
-
-  abrirModal(reg ? "Editar registro diario" : "Nuevo registro diario", html, async () => {
-    const tipo = document.getElementById("f-tipo").value;
-    const horaEntrada = document.getElementById("f-entrada")?.value || "";
-    const horaSalida = document.getElementById("f-salida")?.value || "";
-    const horasDeducidasBanco = tipo === "a_cuenta_acumulado"
-      ? parseHHMM(document.getElementById("f-horas-deducidas").value)
-      : 0;
-
-    let calculo = { llegadaTardeHoras: 0, horasAcumuladasEntrada: 0, horasAcumuladasSalidas: 0, horasExtraPagadas: 0 };
-    const modoDiaEspecial = document.getElementById("f-modo-especial")?.value || "pago";
-    if (tipo === "normal") {
-      if (!horaEntrada || !horaSalida) return alert("Debes indicar hora de entrada y salida.");
-      calculo = calcularDia({ horaEntrada, horaSalida, fecha, modoDiaEspecial });
-    }
-
-    const seGuardaHorario = tipo === "normal" || tipo === "subsidio";
-    const data = {
-      employeeId: emp.id,
-      employeeNombre: emp.nombre,
-      fecha,
-      tipo,
-      horaEntrada: seGuardaHorario ? horaEntrada : "",
-      horaSalida: seGuardaHorario ? horaSalida : "",
-      modoDiaEspecial: tipo === "normal" && esDiaEspecial(fecha) ? modoDiaEspecial : "",
-      horasDeducidasBanco,
-      ...calculo,
-      observaciones: document.getElementById("f-notas").value.trim(),
-      actualizadoEn: serverTimestamp(),
-      actualizadoPor: currentUser.email
-    };
-
-    // ID determinístico: un solo registro por empleado y fecha
-    await setDoc(doc(db, "registros", `${emp.id}_${fecha}`), data);
-    cerrarModal();
-  });
-
-  // Alternar campos visibles según el tipo de día elegido
-  document.getElementById("f-tipo").addEventListener("change", (e) => {
-    const tipo = e.target.value;
-    document.getElementById("campos-normal").hidden = tipo !== "normal" && tipo !== "subsidio";
-    document.getElementById("campos-acuenta").hidden = tipo !== "a_cuenta_acumulado";
-  });
-}
-
 // ---------------- Render: Banco de horas ----------------
 function registrosFiltrados(desde, hasta) {
   return registros.filter(r => {
@@ -530,10 +188,10 @@ function getRangoFechas() {
 document.getElementById("fecha-inicio").addEventListener("change", () => { renderBanco(); renderDeducidas(); });
 document.getElementById("fecha-fin").addEventListener("change", () => { renderBanco(); renderDeducidas(); });
 
+function round2(n) { return Math.round(n * 100) / 100; }
 function gananciaBanco(r) { return (r.horasAcumuladasEntrada || 0) + (r.horasAcumuladasSalidas || 0); }
 
 function calcularBancoEmpleado(emp, hasta) {
-  // Saldo acumulado desde la migración (saldoInicialFecha) hasta la fecha "hasta"
   const desdeMigracion = registros.filter(r =>
     r.employeeId === emp.id &&
     (!emp.saldoInicialFecha || r.fecha >= emp.saldoInicialFecha) &&

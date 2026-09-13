@@ -86,6 +86,8 @@ body {
   background: var(--primary-dark);
   color: #fff;
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
   justify-content: space-between;
   align-items: center;
   padding: 0.9rem 1.5rem;
@@ -110,14 +112,17 @@ body {
 
 .topbar-nav {
   display: flex;
-  gap: 1.25rem;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  row-gap: 0.4rem;
 }
 .topbar-nav a {
   color: rgba(255,255,255,0.75);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   padding-bottom: 0.2rem;
   border-bottom: 2px solid transparent;
+  white-space: nowrap;
 }
 .topbar-nav a:hover { color: #fff; }
 .topbar-nav a.active {

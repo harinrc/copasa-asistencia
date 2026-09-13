@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vacaciones · Control de Asistencia COPASA</title>
+<title>Registro diario · Control de Asistencia COPASA</title>
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -14,13 +14,13 @@
     </div>
     <nav class="topbar-nav">
       <a href="dashboard.html">Empleados</a>
-      <a href="registro-diario.html">Registro diario</a>
+      <a href="registro-diario.html" class="active">Registro diario</a>
       <a href="configuracion.html">Horario</a>
       <a href="temporadas.html">Temporadas</a>
       <a href="feriados.html">Feriados</a>
       <a href="reporte-acumulado.html">Acumuladas</a>
       <a href="reporte-deducidas.html">Deducidas</a>
-      <a href="vacaciones.html" class="active">Vacaciones</a>
+      <a href="vacaciones.html">Vacaciones</a>
     </nav>
     <div class="topbar-user">
       <span id="user-email"></span>
@@ -32,33 +32,35 @@
   <main class="container">
     <section class="card">
       <div class="card-header">
-        <h2>Vacaciones anuales</h2>
+        <h2>Registro diario</h2>
         <div class="fecha-nav">
-          <label for="anio">Periodo</label>
-          <select id="anio"></select>
+          <button id="btn-dia-anterior" class="btn-secondary" title="Día anterior">←</button>
+          <label for="registro-fecha">Fecha</label>
+          <input type="date" id="registro-fecha" />
+          <button id="btn-dia-siguiente" class="btn-secondary" title="Día siguiente">→</button>
+          <button id="btn-dia-hoy" class="btn-secondary">Hoy</button>
         </div>
       </div>
-      <p class="auth-hint" style="text-align:left;margin:0.5rem 0 0;">
-        Cada colaborador inicia el año en <strong>Pendiente</strong>. Al
-        registrar sus fechas aprobadas, el estado cambia automáticamente
-        solo: <strong>Aprobado</strong> (próximo) → <strong>En
-        vacaciones</strong> (mientras dura) → <strong>Ya estuvo de
-        vacaciones</strong> (cuando termina). El periodo siguiente reinicia
-        solo, no arrastra pendientes de años anteriores.
+      <p id="temporada-indicador" class="auth-hint" style="text-align:left;margin:0.5rem 0;"></p>
+      <p class="auth-hint" style="text-align:left;margin:0 0 0.5rem;">
+        Esta lista aplica el horario estándar a todo el personal activo. Solo
+        edita las filas de las personas con una excepción ese día (vacaciones,
+        subsidio, permiso, horas acumuladas, etc.); el resto puede quedar en
+        "Normal" con su hora real de entrada/salida.
       </p>
-    </section>
-
-    <section class="card">
-      <table class="data-table" id="tabla-vacaciones">
+      <table class="data-table" id="tabla-registro-diario">
         <thead>
           <tr>
-            <th>Nombre</th>
             <th>Cargo</th>
-            <th>Estado</th>
-            <th>Fecha aprobación</th>
-            <th>Días</th>
-            <th>Desde</th>
-            <th>Hasta</th>
+            <th>Nombre</th>
+            <th>Tipo de día</th>
+            <th>Entrada</th>
+            <th>Salida</th>
+            <th>Llegada tarde</th>
+            <th>Hrs. acum. entrada</th>
+            <th>Hrs. acum. salida</th>
+            <th>Hrs. extra pagadas</th>
+            <th>Total banco</th>
             <th>Observaciones</th>
             <th>Acciones</th>
           </tr>
@@ -81,6 +83,6 @@
   </div>
 
   <script type="module" src="js/firebase-config.js"></script>
-  <script type="module" src="js/vacaciones.js"></script>
+  <script type="module" src="js/registro-diario.js"></script>
 </body>
 </html>

@@ -5,6 +5,27 @@ real (Firestore): si dos personas lo abren al mismo tiempo, ambas ven los
 mismos datos actualizados al instante. Incluye inicio de sesión, y exportación
 a Excel para enviar el reporte a Recursos Humanos.
 
+## Estructura de páginas
+
+Cada sección vive en su propia página (más fácil de usar y más liviano con
+~60 colaboradores), todas conectadas a la misma base de datos en tiempo real:
+
+- [dashboard.html](dashboard.html) — Empleados (alta/edición) + resumen del
+  banco de horas + exportar a Excel.
+- [registro-diario.html](registro-diario.html) — la hoja del día (equivalente
+  a las pestañas "09-09", "08-09" del Excel), con navegación ← Hoy →.
+- [configuracion.html](configuracion.html) — horario estándar (lunes-viernes
+  y sábado).
+- [temporadas.html](temporadas.html) — rangos de fechas de pago de horas
+  extra en vez de banco.
+- [feriados.html](feriados.html) — fechas puntuales de feriado oficial (los
+  domingos ya se detectan solos, no hace falta agregarlos).
+- [reporte-acumulado.html](reporte-acumulado.html) — detalle día por día del
+  banco de horas ganado.
+- [reporte-deducidas.html](reporte-deducidas.html) — detalle día por día de
+  horas gastadas del banco.
+- [vacaciones.html](vacaciones.html) — control anual de vacaciones.
+
 ## ¿Qué incluye?
 
 - **Login** con Firebase Authentication (correo/contraseña).
@@ -71,6 +92,20 @@ a Excel para enviar el reporte a Recursos Humanos.
    **Configuración**.
 4. Si aplican temporadas de pago de horas extra (ej. abril–junio), créalas en
    **Configuración > Temporadas**.
+
+### Seguridad de los datos (nada se borra solo)
+
+- **Ningún botón del sistema borra datos en bloque.** Todas las acciones de
+  eliminar (empleado, registro del día, temporada, feriado, vacación) actúan
+  sobre **un solo documento a la vez** y siempre piden confirmación explícita
+  antes de ejecutarse. No existe ninguna función de "borrar todo" ni "reset"
+  en el código.
+- Borrar un empleado **no borra** sus registros diarios históricos; solo dejar
+  de aparecer en el Registro diario.
+- Para mayor tranquilidad, puedes activar copias de seguridad automáticas de
+  Firestore desde Firebase Console → Firestore Database → **Copias de
+  seguridad** (recuperación a un punto en el tiempo), sin costo adicional
+  relevante para este volumen de datos.
 
 
 ---

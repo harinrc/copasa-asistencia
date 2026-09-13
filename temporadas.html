@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vacaciones · Control de Asistencia COPASA</title>
+<title>Temporadas · Control de Asistencia COPASA</title>
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -16,11 +16,11 @@
       <a href="dashboard.html">Empleados</a>
       <a href="registro-diario.html">Registro diario</a>
       <a href="configuracion.html">Horario</a>
-      <a href="temporadas.html">Temporadas</a>
+      <a href="temporadas.html" class="active">Temporadas</a>
       <a href="feriados.html">Feriados</a>
       <a href="reporte-acumulado.html">Acumuladas</a>
       <a href="reporte-deducidas.html">Deducidas</a>
-      <a href="vacaciones.html" class="active">Vacaciones</a>
+      <a href="vacaciones.html">Vacaciones</a>
     </nav>
     <div class="topbar-user">
       <span id="user-email"></span>
@@ -32,34 +32,22 @@
   <main class="container">
     <section class="card">
       <div class="card-header">
-        <h2>Vacaciones anuales</h2>
-        <div class="fecha-nav">
-          <label for="anio">Periodo</label>
-          <select id="anio"></select>
-        </div>
+        <h2>Temporadas</h2>
+        <button id="btn-nueva-temporada" class="btn-primary admin-only">+ Nueva temporada</button>
       </div>
-      <p class="auth-hint" style="text-align:left;margin:0.5rem 0 0;">
-        Cada colaborador inicia el año en <strong>Pendiente</strong>. Al
-        registrar sus fechas aprobadas, el estado cambia automáticamente
-        solo: <strong>Aprobado</strong> (próximo) → <strong>En
-        vacaciones</strong> (mientras dura) → <strong>Ya estuvo de
-        vacaciones</strong> (cuando termina). El periodo siguiente reinicia
-        solo, no arrastra pendientes de años anteriores.
+      <p class="auth-hint" style="text-align:left;margin:0 0 0.5rem;">
+        Un rango de fechas (ej. abril-junio) donde las horas después del
+        horario normal se <strong>pagan como extra</strong> en vez de
+        acumularse al banco. Solo afecta los días de lunes a sábado con
+        tipo "Normal"; domingos y feriados siempre preguntan aparte.
       </p>
-    </section>
-
-    <section class="card">
-      <table class="data-table" id="tabla-vacaciones">
+      <table class="data-table" id="tabla-temporadas">
         <thead>
           <tr>
             <th>Nombre</th>
-            <th>Cargo</th>
-            <th>Estado</th>
-            <th>Fecha aprobación</th>
-            <th>Días</th>
             <th>Desde</th>
             <th>Hasta</th>
-            <th>Observaciones</th>
+            <th>Activa</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -68,7 +56,6 @@
     </section>
   </main>
 
-  <!-- Modal genérico -->
   <div id="modal-overlay" class="modal-overlay" hidden>
     <div class="modal">
       <h3 id="modal-title"></h3>
@@ -81,6 +68,6 @@
   </div>
 
   <script type="module" src="js/firebase-config.js"></script>
-  <script type="module" src="js/vacaciones.js"></script>
+  <script type="module" src="js/temporadas.js"></script>
 </body>
 </html>
