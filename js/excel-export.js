@@ -30,6 +30,15 @@ function limpiarFila(fila) {
   });
 }
 
+function normalizarCuerpoDiario(ws, filaInicial) {
+  for (let numero = filaInicial; numero <= ws.rowCount; numero++) {
+    const fila = ws.getRow(numero);
+    fila.eachCell({ includeEmpty: true }, (celda) => {
+      celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
+    });
+  }
+}
+
 function quitarColoresDelCuerpo(ws, filaInicial) {
   if (!ws) return;
   for (let numero = filaInicial; numero <= ws.rowCount; numero++) {
@@ -125,6 +134,7 @@ async function exportarConPlantilla(hojas, nombreArchivo) {
     titulo.value = hoja.titulo || titulo.value;
     const filasExistentes = Math.max(ws.rowCount, 3);
     for (let numero = 3; numero <= filasExistentes; numero++) limpiarFila(ws.getRow(numero));
+    normalizarCuerpoDiario(ws, 3);
     hoja.filas.forEach((fila, indice) => escribirFilaDiaria(ws, fila, indice + 3, 3));
     ws.views = [{ state: "frozen", ySplit: 2 }];
   });
@@ -164,6 +174,7 @@ function escribirResumenPlantilla(ws, filas, filaInicial, tipo) {
         datos.Empleado,
         datos.Cargo,
         datos["Días disponibles"],
+        "",
         "",
         datos["Saldo final"] || datos["Ganado en periodo"] || "",
         ...fechas.map((fecha) => datos[fecha])
