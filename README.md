@@ -30,10 +30,12 @@ a Excel para enviar el reporte a Recursos Humanos.
 - **Horario de sábado**: los sábados usan un horario distinto (por defecto
   8:00 a.m.–12:00 p.m.), configurable en **Configuración**. Las horas después
   de esa hora se acumulan al banco igual que un día normal.
-- **Feriados**: fechas puntuales (ej. 25 de diciembre) en las que, si alguien
-  trabaja, **todas** las horas trabajadas ese día se pagan como extra (no se
-  acumulan al banco), sin importar el horario estándar. Se administran en
-  **Configuración > Feriados**.
+- **Feriados y domingos trabajados**: si alguien trabaja un feriado o un
+  domingo, el sistema pregunta cómo se paga ese día: **"Pago de horas extra
+  (salario)"** (por defecto, solo se registra el total de horas trabajadas
+  para que RRHH lo pague) o **"Horas acumuladas (banco)"** (si administración
+  decide compensarlo con descanso en vez de pago). Se elige por cada registro
+  individual, no queda fijo.
 - **Llegadas tarde y permisos**: si alguien llega tarde o sale antes sin
   autorización, esas horas son un descuento de pago aparte y no tocan el
   banco. Si administración autoriza un permiso (parcial o de día completo),

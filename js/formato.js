@@ -1,5 +1,14 @@
 // Utilidades de formato de horas compartidas entre app.js y reportes.js
 
+// Fecha de HOY en zona horaria LOCAL como "YYYY-MM-DD".
+// OJO: nunca usar new Date().toISOString().slice(0,10) para "hoy": eso usa
+// UTC y en zonas horarias negativas (ej. Nicaragua UTC-6) muestra el día
+// siguiente después de cierta hora de la tarde.
+export function fechaLocalHoy() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // Decimal (ej. 1.33) -> "HH:MM" (ej. "01:20"). Admite negativos ("-01:20").
 export function formatoHHMM(decimalHoras) {
   const horas = Number(decimalHoras) || 0;

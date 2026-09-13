@@ -7,6 +7,7 @@ import {
   collection, doc, deleteDoc, setDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { fechaLocalHoy } from "./formato.js";
 
 let currentUser = null;
 let isAdmin = false;
@@ -65,7 +66,7 @@ function calcularEstado(v) {
   if (!v) return { texto: "Pendiente", clase: "estado-pendiente" };
   if (v.estado === "en_solicitud") return { texto: "En solicitud", clase: "estado-en_solicitud" };
   if (v.estado === "aprobado") {
-    const hoy = new Date().toISOString().slice(0, 10);
+    const hoy = fechaLocalHoy();
     if (v.hasta && hoy > v.hasta) return { texto: "Ya estuvo de vacaciones", clase: "estado-disfrutada" };
     if (v.desde && hoy >= v.desde && (!v.hasta || hoy <= v.hasta)) return { texto: "En vacaciones", clase: "estado-en_vacaciones" };
     return { texto: "Aprobado", clase: "estado-aprobado" };

@@ -5,7 +5,7 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { formatoHHMM, parseHHMM, formatoDiasHoras } from "./formato.js";
+import { formatoHHMM, parseHHMM, formatoDiasHoras, fechaLocalHoy } from "./formato.js";
 
 let currentUser = null;
 let isAdmin = false;
@@ -126,7 +126,7 @@ function renderFeriados() {
 
 document.getElementById("btn-nuevo-feriado").addEventListener("click", () => {
   const html = `
-    ${campo("f-fecha-feriado", "Fecha", "date", new Date().toISOString().slice(0, 10))}
+    ${campo("f-fecha-feriado", "Fecha", "date", fechaLocalHoy())}
     ${campo("f-nombre-feriado", "Nombre (ej. Día de la Independencia)", "text", "")}
   `;
   abrirModal("Nuevo feriado", html, async () => {
@@ -241,14 +241,14 @@ document.getElementById("btn-dia-siguiente").addEventListener("click", () => {
 });
 document.getElementById("btn-dia-hoy").addEventListener("click", () => {
   const input = document.getElementById("registro-fecha");
-  input.value = new Date().toISOString().slice(0, 10);
+  input.value = fechaLocalHoy();
   renderRegistroDiario();
   renderTemporadaIndicador();
 });
 
 function getFechaRegistro() {
   const input = document.getElementById("registro-fecha");
-  if (!input.value) input.value = new Date().toISOString().slice(0, 10);
+  if (!input.value) input.value = fechaLocalHoy();
   return input.value;
 }
 
@@ -262,7 +262,7 @@ function renderRegistroDiario() {
     tr.innerHTML = `
       <td>${escapeHtml(emp.cargo || "")}</td>
       <td>${escapeHtml(emp.nombre)}</td>
-      <td>${ETIQUETAS_TIPO[reg?.tipo] || "—"}</td>
+      <td>${ETIQUETAS_TIPO[reg?.tipo] || "—"}${reg?.modoDiaEspecial ? ` <span class="badge" style="background:${reg.modoDiaEspecial === "banco" ? "#0ea5e9" : "#f59e0b"};">${reg.modoDiaEspecial === "banco" ? "banco" : "salario"}</span>` : ""}</td>
       <td>${reg?.horaEntrada || "—"}</td>
       <td>${reg?.horaSalida || "—"}</td>
       <td>${formatoHHMM(reg?.llegadaTardeHoras || 0)}</td>
@@ -273,6 +273,7 @@ function renderRegistroDiario() {
       <td>${escapeHtml(reg?.observaciones || "")}</td>
       <td>
         <button class="icon-btn edit" data-action="editar-registro" data-emp="${emp.id}" data-fecha="${fecha}">✏️</button>
+        ${reg ? `<button class="icon-btn delete" data-action="eliminar-registro" data-id="${reg.id}">🗑️</button>` : ""}
       </td>`;
     tbody.appendChild(tr);
   });
@@ -286,16 +287,22 @@ function toMinutos(hhmm) {
   return h * 60 + m;
 }
 
-function calcularDia({ horaEntrada, horaSalida, fecha }) {
+function calcularDia({ horaEntrada, horaSalida, fecha, modoDiaEspecial }) {
   const entrada = toMinutos(horaEntrada);
   const salida = toMinutos(horaSalida);
   if (entrada == null || salida == null) {
     return { llegadaTardeHoras: 0, horasAcumuladasEntrada: 0, horasAcumuladasSalidas: 0, horasExtraPagadas: 0 };
   }
 
-  // Feriado trabajado: todas las horas del día se pagan como extra, no hay horario "estándar" ese día
-  if (esFeriado(fecha)) {
+  const esDomingo = new Date(`${fecha}T00:00:00`).getDay() === 0;
+
+  // Feriado o domingo trabajado: no hay horario "estándar" ese día. Administración
+  // decide si esas horas se pagan como salario (por defecto) o se acumulan al banco.
+  if (esFeriado(fecha) || esDomingo) {
     const horasTrabajadas = round2(Math.max(0, salida - entrada) / 60);
+    if (modoDiaEspecial === "banco") {
+      return { llegadaTardeHoras: 0, horasAcumuladasEntrada: 0, horasAcumuladasSalidas: horasTrabajadas, horasExtraPagadas: 0 };
+    }
     return { llegadaTardeHoras: 0, horasAcumuladasEntrada: 0, horasAcumuladasSalidas: 0, horasExtraPagadas: horasTrabajadas };
   }
 
@@ -313,6 +320,10 @@ function calcularDia({ horaEntrada, horaSalida, fecha }) {
     horasAcumuladasSalidas: enTemporada ? 0 : extraSalida,
     horasExtraPagadas: enTemporada ? extraSalida : 0
   };
+}
+
+function esDiaEspecial(fecha) {
+  return esFeriado(fecha) || new Date(`${fecha}T00:00:00`).getDay() === 0;
 }
 
 function round2(n) { return Math.round(n * 100) / 100; }
@@ -390,6 +401,11 @@ document.addEventListener("click", async (e) => {
     const reg = registros.find(r => r.employeeId === emp.id && r.fecha === fecha);
     abrirFormRegistro(emp, fecha, reg);
   }
+  if (btn.dataset.action === "eliminar-registro") {
+    if (confirm("¿Eliminar este registro del día? El banco de horas se recalculará al instante.")) {
+      await deleteDoc(doc(db, "registros", id));
+    }
+  }
 });
 
 function abrirFormEmpleado(emp = null) {
@@ -397,7 +413,7 @@ function abrirFormEmpleado(emp = null) {
     ${campo("f-nombre", "Nombre completo", "text", emp?.nombre || "")}
     ${campo("f-cargo", "Cargo", "text", emp?.cargo || "")}
     ${campo("f-saldo-inicial", "Saldo inicial banco de horas HH:MM (migración del Excel)", "text", formatoHHMM(emp?.saldoInicialHoras ?? 0), 'placeholder="00:00" pattern="-?[0-9]+:[0-9]{2}"')}
-    ${campo("f-saldo-fecha", "Fecha del saldo inicial", "date", emp?.saldoInicialFecha || new Date().toISOString().slice(0, 10))}
+    ${campo("f-saldo-fecha", "Fecha del saldo inicial", "date", emp?.saldoInicialFecha || fechaLocalHoy())}
   `;
   abrirModal(emp ? "Editar empleado" : "Nuevo empleado", html, async () => {
     const data = {
@@ -433,6 +449,14 @@ function abrirFormRegistro(emp, fecha, reg = null) {
     <div id="campos-normal" ${(tipoActual !== "normal" && tipoActual !== "subsidio") ? "hidden" : ""}>
       ${campo("f-entrada", "Hora de entrada" , "time", reg?.horaEntrada || "")}
       ${campo("f-salida", "Hora de salida (informativo si es subsidio)", "time", reg?.horaSalida || "")}
+      ${esDiaEspecial(fecha) ? `
+      <div class="modal-body-field">
+        <label for="f-modo-especial">Este día es domingo/feriado. ¿Cómo se paga lo trabajado?</label>
+        <select id="f-modo-especial">
+          <option value="pago" ${(!reg || reg.modoDiaEspecial !== "banco") ? "selected" : ""}>Pago de horas extra (salario)</option>
+          <option value="banco" ${reg?.modoDiaEspecial === "banco" ? "selected" : ""}>Horas acumuladas (banco)</option>
+        </select>
+      </div>` : ""}
     </div>
     <div id="campos-acuenta" ${tipoActual !== "a_cuenta_acumulado" ? "hidden" : ""}>
       ${campo("f-horas-deducidas", "Horas a descontar del banco HH:MM (día completo = 08:00)", "text", formatoHHMM(reg?.horasDeducidasBanco ?? 8), 'placeholder="08:00" pattern="-?[0-9]+:[0-9]{2}"')}
@@ -452,9 +476,10 @@ function abrirFormRegistro(emp, fecha, reg = null) {
       : 0;
 
     let calculo = { llegadaTardeHoras: 0, horasAcumuladasEntrada: 0, horasAcumuladasSalidas: 0, horasExtraPagadas: 0 };
+    const modoDiaEspecial = document.getElementById("f-modo-especial")?.value || "pago";
     if (tipo === "normal") {
       if (!horaEntrada || !horaSalida) return alert("Debes indicar hora de entrada y salida.");
-      calculo = calcularDia({ horaEntrada, horaSalida, fecha });
+      calculo = calcularDia({ horaEntrada, horaSalida, fecha, modoDiaEspecial });
     }
 
     const seGuardaHorario = tipo === "normal" || tipo === "subsidio";
@@ -465,6 +490,7 @@ function abrirFormRegistro(emp, fecha, reg = null) {
       tipo,
       horaEntrada: seGuardaHorario ? horaEntrada : "",
       horaSalida: seGuardaHorario ? horaSalida : "",
+      modoDiaEspecial: tipo === "normal" && esDiaEspecial(fecha) ? modoDiaEspecial : "",
       horasDeducidasBanco,
       ...calculo,
       observaciones: document.getElementById("f-notas").value.trim(),
