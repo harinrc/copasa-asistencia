@@ -30,14 +30,12 @@ function limpiarFila(fila) {
   });
 }
 
-function quitarRellenoAmarillo(ws, filaInicial) {
+function quitarColoresDelCuerpo(ws, filaInicial) {
+  if (!ws) return;
   for (let numero = filaInicial; numero <= ws.rowCount; numero++) {
     const fila = ws.getRow(numero);
     fila.eachCell({ includeEmpty: true }, (celda) => {
-      const argb = celda.fill?.fgColor?.argb;
-      if (argb === "FFFFFF00" || argb === "FFFF00") {
-        celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
-      }
+      celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
     });
   }
 }
@@ -136,8 +134,8 @@ async function exportarConPlantilla(hojas, nombreArchivo) {
   escribirResumenPlantilla(wb.getWorksheet("Reporte de Ausencias"), [], 3);
   escribirResumenPlantilla(wb.getWorksheet("Reporte de Acumulado"), resumenAcumulado?.filas || [], 15, "acumulado");
   escribirResumenPlantilla(wb.getWorksheet("Reporte de horas deducidos"), resumenDeducido?.filas || [], 5, "deducido");
-  quitarRellenoAmarillo(wb.getWorksheet("Reporte de Acumulado"), 15);
-  quitarRellenoAmarillo(wb.getWorksheet("Reporte de horas deducidos"), 5);
+  quitarColoresDelCuerpo(wb.getWorksheet("Reporte de Acumulado"), 15);
+  quitarColoresDelCuerpo(wb.getWorksheet("Reporte de horas deducidos"), 5);
 
   const buffer = await wb.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
@@ -166,8 +164,8 @@ function escribirResumenPlantilla(ws, filas, filaInicial, tipo) {
         datos.Empleado,
         datos.Cargo,
         datos["Días disponibles"],
-        datos["Días gozados en periodo"],
-        datos["Saldo final"] || "",
+        "",
+        datos["Saldo final"] || datos["Ganado en periodo"] || "",
         ...fechas.map((fecha) => datos[fecha])
       ];
     } else {
