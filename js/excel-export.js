@@ -76,8 +76,8 @@ async function exportarConPlantilla(hojas, nombreArchivo) {
   const resumenAcumulado = hojas.find((hoja) => hoja.nombre === "Reporte de Acumulado");
   const resumenDeducido = hojas.find((hoja) => hoja.nombre === "Reporte de horas deducidos");
   escribirResumenPlantilla(wb.getWorksheet("Reporte de Ausencias"), [], 3);
-  escribirResumenPlantilla(wb.getWorksheet("Reporte de Acumulado"), resumenAcumulado?.filas || [], 14);
-  escribirResumenPlantilla(wb.getWorksheet("Reporte de horas deducidos"), resumenDeducido?.filas || [], 5, true);
+  escribirResumenPlantilla(wb.getWorksheet("Reporte de Acumulado"), resumenAcumulado?.filas || [], 15, "acumulado");
+  escribirResumenPlantilla(wb.getWorksheet("Reporte de horas deducidos"), resumenDeducido?.filas || [], 4, "deducido");
 
   const buffer = await wb.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
@@ -91,15 +91,29 @@ async function exportarConPlantilla(hojas, nombreArchivo) {
   URL.revokeObjectURL(url);
 }
 
-function escribirResumenPlantilla(ws, filas, filaInicial, incluirNumero = false) {
+function escribirResumenPlantilla(ws, filas, filaInicial, tipo) {
   if (!ws) return;
   const filaModelo = ws.getRow(filaInicial);
   for (let numero = filaInicial; numero <= ws.rowCount; numero++) limpiarFila(ws.getRow(numero));
   filas.forEach((datos, indice) => {
     const fila = ws.getRow(filaInicial + indice);
     if (indice > 0) copiarEstiloFila(filaModelo, fila);
-    const valores = Object.values(datos).filter((valor) => valor !== undefined);
-    if (incluirNumero) valores.unshift(indice + 1);
+    let valores;
+    if (tipo === "acumulado") {
+      const fechas = Object.keys(datos).filter((clave) => /^\d{1,2}-[a-z]{3}$/i.test(clave));
+      valores = [
+        indice + 1,
+        datos.Empleado,
+        datos.Cargo,
+        datos["Días disponibles"],
+        datos["Gastado en periodo"],
+        datos["Ganado en periodo"],
+        ...fechas.map((fecha) => datos[fecha])
+      ];
+    } else {
+      const fechas = Object.keys(datos).filter((clave) => /^\d{1,2}-[a-z]{3}$/i.test(clave));
+      valores = [indice + 1, datos.Empleado, datos.Cargo, ...fechas.map((fecha) => datos[fecha])];
+    }
     valores.forEach((valor, columna) => {
       fila.getCell(columna + 1).value = valor ?? "";
     });
