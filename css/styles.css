@@ -261,7 +261,6 @@ body > #btn-instalar-app {
   border-radius: 10px;
   padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  overflow-x: auto;
   min-width: 0;
 }
 
@@ -313,6 +312,14 @@ body > #btn-instalar-app {
 }
 .data-table th { background: #f9fafb; }
 .data-table tr:hover { background: #f9fafb; }
+
+/* Contenedor que permite deslizar solo la tabla, dejando fijo el resto de la tarjeta */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
+}
+.table-scroll .data-table { margin-top: 0; }
 
 /* ---------- Cuadrícula día por día (reportes.html) ---------- */
 .grid-scroll {
