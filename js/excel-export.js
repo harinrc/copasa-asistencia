@@ -264,8 +264,15 @@ function etiquetaFechaExportacion(fecha) {
 // }, ...]
 export async function exportarExcelBonito(hojas, nombreArchivo) {
   if (hojas.some((hoja) => hoja.usarPlantilla)) {
-    await exportarConPlantilla(hojas, nombreArchivo);
-    return;
+    try {
+      await exportarConPlantilla(hojas, nombreArchivo);
+      return;
+    } catch (error) {
+      console.error("No se pudo generar el Excel con la plantilla original:", error);
+      const hojasSinPlantilla = hojas.map((hoja) => ({ ...hoja, usarPlantilla: false }));
+      await exportarExcelBonito(hojasSinPlantilla, nombreArchivo);
+      return;
+    }
   }
 
   const wb = new ExcelJS.Workbook();
