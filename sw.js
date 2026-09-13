@@ -1,7 +1,7 @@
 // Service worker mínimo: necesario para que el navegador considere la app
 // "instalable" (PWA). Usa red primero y solo cae al caché si no hay
 // conexión, para que siempre se vea la versión más reciente cuando hay internet.
-const CACHE_NAME = "copasa-shell-v4";
+const CACHE_NAME = "copasa-shell-v5";
 const ARCHIVOS_BASE = [
   "./login.html",
   "./dashboard.html",

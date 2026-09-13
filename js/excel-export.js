@@ -10,6 +10,8 @@ const COLOR_FRANJA = "FFF6F6F6";     // gris muy claro para filas pares
 const COLOR_BORDE = "FFDDDDDD";
 const COLOR_TITULO = "FF8F101F";
 const NOMBRE_PLANTILLA = "REPORTE DE ASISTENCIA DEL 27 DE AGOSTO AL 08 DE SEPTIEMBRE 2026.xlsx";
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const DIAS_SEMANA = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
 
 function bordeCompleto() {
   const estilo = { style: "thin", color: { argb: COLOR_BORDE } };
@@ -37,6 +39,47 @@ function normalizarCuerpoDiario(ws, filaInicial) {
       celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
     });
   }
+}
+
+function limpiarZonaFechas(ws, columnaInicial, filaInicial, filaFinal) {
+  ws.model.merges.slice().forEach((rango) => {
+    const coincidencia = rango.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
+    if (!coincidencia) return;
+    const inicio = ws.getColumn(coincidencia[1]).number;
+    if (inicio >= columnaInicial) ws.unMergeCells(rango);
+  });
+  for (let filaNumero = filaInicial; filaNumero <= filaFinal; filaNumero++) {
+    const fila = ws.getRow(filaNumero);
+    for (let columna = columnaInicial; columna <= ws.columnCount; columna++) {
+      const celda = fila.getCell(columna);
+      celda.value = null;
+      celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
+    }
+  }
+}
+
+function prepararEncabezadosFechas(ws, fechas, columnaInicial, filaMes, filaDia, fechaComoTexto) {
+  const estiloMes = { ...ws.getCell(filaMes, columnaInicial).style };
+  const estiloDia = { ...ws.getCell(filaDia, columnaInicial).style };
+  const grupos = [];
+  fechas.forEach((fecha, indice) => {
+    const actual = new Date(`${fecha}T00:00:00`);
+    const mes = actual.getMonth();
+    const ultimo = grupos[grupos.length - 1];
+    if (!ultimo || ultimo.mes !== mes) grupos.push({ mes, inicio: indice, fin: indice });
+    else ultimo.fin = indice;
+    const columna = ws.getCell(filaDia, columnaInicial + indice);
+    columna.style = estiloDia;
+    columna.value = fechaComoTexto(actual);
+  });
+  grupos.forEach((grupo) => {
+    const inicio = columnaInicial + grupo.inicio;
+    const fin = columnaInicial + grupo.fin;
+    if (fin > inicio) ws.mergeCells(filaMes, inicio, filaMes, fin);
+    const celda = ws.getCell(filaMes, inicio);
+    celda.style = estiloMes;
+    celda.value = MESES_CORTOS[grupo.mes].toUpperCase();
+  });
 }
 
 function quitarColoresDelCuerpo(ws, filaInicial) {
@@ -142,8 +185,20 @@ async function exportarConPlantilla(hojas, nombreArchivo) {
   const resumenAcumulado = hojas.find((hoja) => hoja.nombre === "Reporte de Acumulado");
   const resumenDeducido = hojas.find((hoja) => hoja.nombre === "Reporte de horas deducidos");
   escribirResumenPlantilla(wb.getWorksheet("Reporte de Ausencias"), [], 3);
-  escribirResumenPlantilla(wb.getWorksheet("Reporte de Acumulado"), resumenAcumulado?.filas || [], 15, "acumulado");
-  escribirResumenPlantilla(wb.getWorksheet("Reporte de horas deducidos"), resumenDeducido?.filas || [], 5, "deducido");
+  const fechas = resumenAcumulado?.fechas || resumenDeducido?.fechas || [];
+  const acumulado = wb.getWorksheet("Reporte de Acumulado");
+  const deducido = wb.getWorksheet("Reporte de horas deducidos");
+  const fechasExcel = fechas.map((fecha) => new Date(`${fecha}T00:00:00`));
+  if (acumulado) {
+    limpiarZonaFechas(acumulado, 9, 13, acumulado.rowCount);
+    prepararEncabezadosFechas(acumulado, fechasExcel, 9, 13, 14, (fecha) => fecha.getDate());
+  }
+  if (deducido) {
+    limpiarZonaFechas(deducido, 4, 3, deducido.rowCount);
+    prepararEncabezadosFechas(deducido, fechasExcel, 4, 3, 4, (fecha) => `${fecha.getDate()}-${MESES_CORTOS[fecha.getMonth()]}`);
+  }
+  escribirResumenPlantilla(acumulado, resumenAcumulado?.filas || [], 15, "acumulado", fechasExcel, 9);
+  escribirResumenPlantilla(deducido, resumenDeducido?.filas || [], 5, "deducido", fechasExcel, 4);
   quitarColoresDelCuerpo(wb.getWorksheet("Reporte de Acumulado"), 15);
   quitarColoresDelCuerpo(wb.getWorksheet("Reporte de horas deducidos"), 5);
 
@@ -159,7 +214,7 @@ async function exportarConPlantilla(hojas, nombreArchivo) {
   URL.revokeObjectURL(url);
 }
 
-function escribirResumenPlantilla(ws, filas, filaInicial, tipo) {
+function escribirResumenPlantilla(ws, filas, filaInicial, tipo, fechas, columnaFechas) {
   if (!ws) return;
   const filaModelo = ws.getRow(filaInicial);
   for (let numero = filaInicial; numero <= ws.rowCount; numero++) limpiarFila(ws.getRow(numero));
@@ -168,7 +223,6 @@ function escribirResumenPlantilla(ws, filas, filaInicial, tipo) {
     if (indice > 0) copiarEstiloFila(filaModelo, fila);
     let valores;
     if (tipo === "acumulado") {
-      const fechas = Object.keys(datos).filter((clave) => /^\d{1,2}-[a-z]{3}$/i.test(clave));
       valores = [
         indice + 1,
         datos.Empleado,
@@ -177,16 +231,19 @@ function escribirResumenPlantilla(ws, filas, filaInicial, tipo) {
         "",
         "",
         datos["Saldo final"] || datos["Ganado en periodo"] || "",
-        ...fechas.map((fecha) => datos[fecha])
+        ...fechas.map((fecha) => datos[etiquetaFechaExportacion(fecha)])
       ];
     } else {
-      const fechas = Object.keys(datos).filter((clave) => /^\d{1,2}-[a-z]{3}$/i.test(clave));
-      valores = [indice + 1, datos.Empleado, datos.Cargo, ...fechas.map((fecha) => datos[fecha])];
+      valores = [indice + 1, datos.Empleado, datos.Cargo, ...fechas.map((fecha) => datos[etiquetaFechaExportacion(fecha)])];
     }
     valores.forEach((valor, columna) => {
       fila.getCell(columna + 1).value = valor ?? "";
     });
   });
+}
+
+function etiquetaFechaExportacion(fecha) {
+  return `${fecha.getDate()}-${MESES_CORTOS[fecha.getMonth()]}`;
 }
 
 // hojas: [{

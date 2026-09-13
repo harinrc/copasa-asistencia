@@ -448,8 +448,8 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   try {
     await exportarExcelBonito([
       ...hojasPorDia,
-      { nombre: "Reporte de Acumulado", titulo: `REPORTE DE CONTROL DE HORAS DEL ${desde} AL ${hasta}.`, filas: filasBanco, colorPestana: "FF8F101F" },
-      { nombre: "Reporte de horas deducidos", titulo: `REPORTE DE HORAS DEDUCIDAS DEL ${desde} AL ${hasta}.`, filas: filasDeducidas, colorPestana: "FFB71C1C" }
+      { nombre: "Reporte de Acumulado", titulo: `REPORTE DE CONTROL DE HORAS DEL ${desde} AL ${hasta}.`, filas: filasBanco, fechas: fechasPeriodo, colorPestana: "FF8F101F" },
+      { nombre: "Reporte de horas deducidos", titulo: `REPORTE DE HORAS DEDUCIDAS DEL ${desde} AL ${hasta}.`, filas: filasDeducidas, fechas: fechasPeriodo, colorPestana: "FFB71C1C" }
     ], nombreArchivo);
   } finally {
     btn.disabled = false;
