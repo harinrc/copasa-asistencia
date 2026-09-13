@@ -11,6 +11,12 @@ const DURACION_MS = 7000; // cuánto dura cada foto en pantalla
 
 const contenedor = document.getElementById("slideshow");
 if (contenedor) {
+  const imagenesListas = Promise.all(IMAGENES.map((src) => {
+    const imagen = new Image();
+    imagen.src = src;
+    return imagen.decode ? imagen.decode().catch(() => undefined) : Promise.resolve();
+  }));
+
   const slides = IMAGENES.map((src) => {
     const div = document.createElement("div");
     div.className = "slide";
@@ -24,12 +30,11 @@ if (contenedor) {
   function mostrar(indice) {
     slides.forEach((slide, i) => {
       if (i === indice) {
-        // Reinicia la animación de zoom quitando y volviendo a poner la clase
         slide.classList.remove("zoom");
-        void slide.offsetWidth; // fuerza el reflow para reiniciar el keyframe
+        void slide.offsetWidth;
         slide.classList.add("zoom", "active");
       } else {
-        slide.classList.remove("active", "zoom");
+        slide.classList.remove("active");
       }
     });
   }
@@ -47,7 +52,9 @@ if (contenedor) {
   }
 
   if (slides.length > 0) {
-    siguiente();
-    setInterval(siguiente, DURACION_MS);
+    imagenesListas.then(() => {
+      siguiente();
+      setInterval(siguiente, DURACION_MS);
+    });
   }
 }
