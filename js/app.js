@@ -281,10 +281,10 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
       "Hrs. acumuladas entrada": formatoHHMM(r.horasAcumuladasEntrada || 0),
       "Hrs. acumuladas salida": formatoHHMM(r.horasAcumuladasSalidas || 0),
       "Hrs. extra pagadas": formatoHHMM(r.horasExtraPagadas || 0),
-      "Hrs. deducidas del banco": formatoHHMM(r.horasDeducidasBanco || 0),
+      "Hrs. deducidas de control de horas": formatoHHMM(r.horasDeducidasBanco || 0),
       "Hrs. deducidas del salario": formatoHHMM(r.horasDeducidasSalario || 0),
       "Hrs. deducidas de vacaciones": formatoHHMM(r.horasDeducidasVacaciones || 0),
-      "Total banco del día": formatoHHMM(gananciaBanco(r) - (r.horasDeducidasBanco || 0)),
+      "Total control de horas del día": formatoHHMM(gananciaBanco(r) - (r.horasDeducidasBanco || 0)),
       "Observaciones": r.observaciones || ""
     };
   });
@@ -320,7 +320,7 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasDetalle), "Detalle");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasBanco), "Banco de horas");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasBanco), "Control de horas");
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasDeducidas), "Horas deducidas");
 
   const nombreArchivo = `Reporte_Asistencia_${desde || "inicio"}_a_${hasta || "hoy"}.xlsx`;

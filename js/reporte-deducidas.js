@@ -108,8 +108,8 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
   });
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), "Deducidas por día");
-  XLSX.writeFile(wb, `Reporte_Deducidas_${desde}_a_${hasta}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), "Control de horas - Deducido");
+  XLSX.writeFile(wb, `Reporte_Control_Horas_Deducido_${desde}_a_${hasta}.xlsx`);
 });
 
 function escapeHtml(str) {
