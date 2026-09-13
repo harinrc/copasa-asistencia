@@ -30,9 +30,38 @@ function limpiarFila(fila) {
   });
 }
 
+function clonarHojaPlantilla(wb, origen, nombre) {
+  const existente = wb.getWorksheet(nombre);
+  if (existente) return existente;
+  const ws = wb.addWorksheet(nombre);
+  ws.properties = { ...origen.properties, tabColor: origen.properties.tabColor };
+  ws.pageSetup = { ...origen.pageSetup };
+  ws.pageMargins = { ...origen.pageMargins };
+  ws.views = origen.views.map((vista) => ({ ...vista }));
+  origen.columns.forEach((columna, indice) => {
+    const nueva = ws.getColumn(indice + 1);
+    nueva.width = columna.width;
+    nueva.hidden = columna.hidden;
+    nueva.outlineLevel = columna.outlineLevel;
+  });
+  origen.eachRow({ includeEmpty: true }, (fila, numero) => {
+    const nueva = ws.getRow(numero);
+    nueva.height = fila.height;
+    fila.eachCell({ includeEmpty: true }, (celda, columna) => {
+      const destino = nueva.getCell(columna);
+      destino.value = celda.value;
+      destino.style = { ...celda.style };
+    });
+  });
+  origen.model.merges.forEach((rango) => ws.mergeCells(rango));
+  return ws;
+}
+
 function escribirFilaDiaria(ws, datos, numero, plantillaFila) {
   const filaExcel = ws.getRow(numero);
   if (numero > plantillaFila) copiarEstiloFila(ws.getRow(plantillaFila), filaExcel);
+  const rangoFusionado = `C${numero}:I${numero}`;
+  try { ws.unMergeCells(rangoFusionado); } catch (_) { /* no estaba fusionada */ }
   limpiarFila(filaExcel);
   const valores = [
     datos.Cargo,
@@ -48,6 +77,22 @@ function escribirFilaDiaria(ws, datos, numero, plantillaFila) {
   valores.forEach((valor, columna) => {
     filaExcel.getCell(columna + 1).value = valor ?? "";
   });
+  const borde = { style: "thin", color: { argb: "FF000000" } };
+  const rellenoNormal = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
+  for (let columna = 1; columna <= 9; columna++) {
+    const celda = filaExcel.getCell(columna);
+    celda.font = { name: "Arial", size: 10, color: { argb: "FF000000" } };
+    celda.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    celda.border = { top: borde, left: borde, bottom: borde, right: borde };
+    celda.fill = rellenoNormal;
+  }
+  if (datos._especial) {
+    ws.mergeCells(rangoFusionado);
+    const especial = filaExcel.getCell(3);
+    especial.value = datos._especial.texto;
+    especial.fill = { type: "pattern", pattern: "solid", fgColor: { argb: datos._especial.color } };
+    especial.font = { name: "Arial", size: 10, bold: false, color: { argb: "FF000000" } };
+  }
 }
 
 async function exportarConPlantilla(hojas, nombreArchivo) {
@@ -57,19 +102,20 @@ async function exportarConPlantilla(hojas, nombreArchivo) {
   await wb.xlsx.load(await respuesta.arrayBuffer());
 
   const hojasDiarias = hojas.filter((hoja) => /^\d{2}-\d{2}$/.test(hoja.nombre));
+  const machote = wb.getWorksheet("MACHOTE");
   const nombresPermitidos = new Set(["MACHOTE", "Reporte de Ausencias", ...hojas.map((hoja) => hoja.nombre)]);
   wb.worksheets.slice().forEach((ws) => {
     if (!nombresPermitidos.has(ws.name)) wb.removeWorksheet(ws.id);
   });
 
   hojasDiarias.forEach((hoja) => {
-    const ws = wb.getWorksheet(hoja.nombre);
+    const ws = wb.getWorksheet(hoja.nombre) || clonarHojaPlantilla(wb, machote, hoja.nombre);
     if (!ws) return;
     const titulo = ws.getCell("D1");
     titulo.value = hoja.titulo || titulo.value;
     const filasExistentes = Math.max(ws.rowCount, 3);
     for (let numero = 3; numero <= filasExistentes; numero++) limpiarFila(ws.getRow(numero));
-    hoja.filas.forEach((fila, indice) => escribirFilaDiaria(ws, fila, indice + 1, 3));
+    hoja.filas.forEach((fila, indice) => escribirFilaDiaria(ws, fila, indice + 3, 3));
     ws.views = [{ state: "frozen", ySplit: 2 }];
   });
 
@@ -106,8 +152,8 @@ function escribirResumenPlantilla(ws, filas, filaInicial, tipo) {
         datos.Empleado,
         datos.Cargo,
         datos["Días disponibles"],
-        datos["Gastado en periodo"],
-        datos["Ganado en periodo"],
+        datos["Días gozados en periodo"],
+        datos["Saldo final"],
         ...fechas.map((fecha) => datos[fecha])
       ];
     } else {

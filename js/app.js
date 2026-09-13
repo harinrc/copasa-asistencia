@@ -423,6 +423,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       "Cargo": emp.cargo || "",
       "Ganado en periodo": formatoHHMM(ganadoPeriodo),
       "Gastado en periodo": formatoHHMM(gastadoPeriodo),
+      "Saldo final": formatoHHMM(saldoFinal),
       "Días disponibles": formatoDiasHoras(saldoFinal),
       "Días gozados en periodo": propios.filter(r => r.tipo === "a_cuenta_acumulado").length
     };
