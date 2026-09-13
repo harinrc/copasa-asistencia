@@ -1,0 +1,97 @@
+// Reporte "Deducido a cuenta de salario": llegadas tarde/salidas tempranas sin
+// constancia médica, y faltas injustificadas. NO afecta el banco de horas.
+import { auth, db } from "./firebase-config.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  collection, onSnapshot, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { formatoHHMM } from "./formato.js";
+
+let empleados = [];
+let registros = [];
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.replace("login.html");
+    return;
+  }
+  document.getElementById("user-email").textContent = user.email;
+  iniciarListeners();
+});
+
+document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
+
+function iniciarListeners() {
+  onSnapshot(query(collection(db, "empleados"), orderBy("nombre")), (snap) => {
+    empleados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  });
+  onSnapshot(query(collection(db, "registros"), orderBy("fecha", "desc")), (snap) => {
+    registros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  });
+}
+
+document.getElementById("fecha-inicio").addEventListener("change", render);
+document.getElementById("fecha-fin").addEventListener("change", render);
+
+function getRangoFechas() {
+  return {
+    desde: document.getElementById("fecha-inicio").value || null,
+    hasta: document.getElementById("fecha-fin").value || null
+  };
+}
+
+function motivo(r) {
+  if (r.tipo === "falta") return "Falta injustificada";
+  const partes = [];
+  if (r.llegadaTardeHoras > 0) partes.push("Llegada tarde");
+  if (r.salidaTempranoHoras > 0) partes.push("Salida temprano");
+  return partes.join(" + ") || "—";
+}
+
+function filasPeriodo() {
+  const { desde, hasta } = getRangoFechas();
+  return registros
+    .filter(r => (r.horasDeducidasSalario || 0) > 0)
+    .filter(r => (!desde || r.fecha >= desde) && (!hasta || r.fecha <= hasta));
+}
+
+function render() {
+  const tbody = document.querySelector("#tabla-salario tbody");
+  tbody.innerHTML = "";
+  filasPeriodo().forEach(r => {
+    const emp = empleados.find(e => e.id === r.employeeId);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(emp ? emp.nombre : r.employeeNombre || "")}</td>
+      <td>${r.fecha}</td>
+      <td>${motivo(r)}</td>
+      <td>${formatoHHMM(r.horasDeducidasSalario || 0)}</td>
+      <td>${escapeHtml(r.observaciones || "")}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById("btn-exportar").addEventListener("click", () => {
+  const { desde, hasta } = getRangoFechas();
+  const filas = filasPeriodo().map(r => {
+    const emp = empleados.find(e => e.id === r.employeeId);
+    return {
+      "Empleado": emp ? emp.nombre : r.employeeNombre || "",
+      "Fecha": r.fecha,
+      "Motivo": motivo(r),
+      "Horas deducidas": formatoHHMM(r.horasDeducidasSalario || 0),
+      "Observaciones": r.observaciones || ""
+    };
+  });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), "Deducido a salario");
+  XLSX.writeFile(wb, `Deducido_Salario_${desde || "inicio"}_a_${hasta || "hoy"}.xlsx`);
+});
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}

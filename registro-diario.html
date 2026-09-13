@@ -20,6 +20,7 @@
       <a href="feriados.html">Feriados</a>
       <a href="reporte-acumulado.html">Acumuladas</a>
       <a href="reporte-deducidas.html">Deducidas</a>
+      <a href="reporte-salario.html">Ded. Salario</a>
       <a href="vacaciones.html">Vacaciones</a>
     </nav>
     <div class="topbar-user">
@@ -48,6 +49,11 @@
         subsidio, permiso, horas acumuladas, etc.); el resto puede quedar en
         "Normal" con su hora real de entrada/salida.
       </p>
+      <p class="auth-hint" style="text-align:left;margin:0 0 0.5rem;">
+        Los días sin edición ya muestran "Normal" con el horario configurado
+        aplicado automáticamente (0 horas de más/de menos). Solo edita a
+        quien tenga una excepción ese día.
+      </p>
       <table class="data-table" id="tabla-registro-diario">
         <thead>
           <tr>
@@ -57,9 +63,11 @@
             <th>Entrada</th>
             <th>Salida</th>
             <th>Llegada tarde</th>
+            <th>Salida temprano</th>
             <th>Hrs. acum. entrada</th>
             <th>Hrs. acum. salida</th>
             <th>Hrs. extra pagadas</th>
+            <th>Ded. salario</th>
             <th>Total banco</th>
             <th>Observaciones</th>
             <th>Acciones</th>

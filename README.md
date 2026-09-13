@@ -24,6 +24,9 @@ Cada sección vive en su propia página (más fácil de usar y más liviano con
   banco de horas ganado.
 - [reporte-deducidas.html](reporte-deducidas.html) — detalle día por día de
   horas gastadas del banco.
+- [reporte-salario.html](reporte-salario.html) — horas descontadas del
+  **salario** (no del banco): faltas injustificadas, llegadas tarde o
+  salidas tempranas sin constancia médica.
 - [vacaciones.html](vacaciones.html) — control anual de vacaciones.
 
 ## ¿Qué incluye?
@@ -33,10 +36,17 @@ Cada sección vive en su propia página (más fácil de usar y más liviano con
   inicial** del banco de horas (para migrar lo que ya tenían acumulado en el
   Excel).
 - **Registro diario** (una fila por empleado y fecha, igual que las pestañas
-  "09-09", "08-09" del Excel): entrada, salida, tipo de día, y cálculo
-  automático de:
-  - **Llegada tarde**: minutos/horas después de la hora estándar de entrada.
-    Es un descuento de pago aparte, **no afecta el banco de horas**.
+  "09-09", "08-09" del Excel): **el horario configurado se aplica
+  automáticamente a todo el personal activo** (se ve como "Normal" con 0
+  horas de más/de menos sin necesidad de crear nada). Solo edita las
+  excepciones del día: alguien con vacaciones, subsidio, permiso, horas
+  acumuladas, llegada tarde, salida temprano, etc. Cálculo automático de:
+  - **Llegada tarde** y **salida temprano**: minutos/horas fuera del horario
+    estándar. Por defecto son un descuento de **salario** (ver "Deducido a
+    cuenta de salario"), **no afectan el banco de horas**. Si la persona
+    marca la casilla **"Trajo constancia médica/clínica"**, esas horas se
+    siguen mostrando mostrando (para tener el dato) pero **no se descuentan
+    del salario**.
   - **Horas acumuladas de entrada**: si llega antes de la hora estándar.
   - **Horas acumuladas de salida**: si sale después de la hora estándar
     **y no hay una temporada activa** ese día.
@@ -44,7 +54,8 @@ Cada sección vive en su propia página (más fácil de usar y más liviano con
     temporada activa** ese día, en vez de ir al banco se pagan directamente.
   - **Tipos de día especiales**: `Subsidio` (incapacidad del INSS, no
     descuenta nada), `A cuenta de horas acumuladas` (gasta horas del banco),
-    `Falta`, `Permiso`, `Vacaciones`.
+    `Falta` (ausencia sin aviso ni constancia — descuenta el día completo del
+    **salario**, editable), `Permiso`, `Vacaciones`.
 - **Temporadas**: rangos de fechas (ej. abril-junio, octubre-diciembre) donde
   las horas después del horario se pagan como extra en vez de acumularse al
   banco. Se activan/desactivan con un botón desde **Configuración**.

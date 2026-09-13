@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Reporte de horas deducidas · Control de Asistencia COPASA</title>
+<title>Deducido a cuenta de salario · Control de Asistencia COPASA</title>
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -19,8 +19,8 @@
       <a href="temporadas.html">Temporadas</a>
       <a href="feriados.html">Feriados</a>
       <a href="reporte-acumulado.html">Acumuladas</a>
-      <a href="reporte-deducidas.html" class="active">Deducidas</a>
-      <a href="reporte-salario.html">Ded. Salario</a>
+      <a href="reporte-deducidas.html">Deducidas</a>
+      <a href="reporte-salario.html" class="active">Ded. Salario</a>
       <a href="vacaciones.html">Vacaciones</a>
     </nav>
     <div class="topbar-user">
@@ -44,29 +44,33 @@
         </div>
         <button id="btn-exportar" class="btn-secondary">Exportar a Excel</button>
       </div>
-      <p class="auth-hint" style="text-align:left;margin:0.75rem 0 0;">
-        Elige un rango corto (ej. una quincena) para que la tabla no se
-        vuelva demasiado ancha con ~60 colaboradores.
-      </p>
     </section>
 
     <section class="card">
-      <h2>Reporte de horas deducidas (día por día)</h2>
-      <p class="auth-hint" style="text-align:left;margin:0;">
-        Solo se muestran horas cuando ese día se marcó "A cuenta de
-        acumulado / permiso autorizado".
+      <h2>Deducido a cuenta de salario</h2>
+      <p class="auth-hint" style="text-align:left;margin:0 0 0.5rem;">
+        Estas horas <strong>no</strong> se restan del banco de horas — se
+        descuentan directamente del pago del colaborador. Aparecen aquí las
+        llegadas tarde o salidas tempranas <strong>sin constancia médica</strong>,
+        y las faltas injustificadas (sin aviso ni constancia).
       </p>
-      <div class="grid-scroll">
-        <table class="grid-table" id="grid-deducidas">
-          <thead><tr></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <table class="data-table" id="tabla-salario">
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Fecha</th>
+            <th>Motivo</th>
+            <th>Horas deducidas</th>
+            <th>Observaciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script type="module" src="js/firebase-config.js"></script>
-  <script type="module" src="js/reporte-deducidas.js"></script>
+  <script type="module" src="js/reporte-salario.js"></script>
 </body>
 </html>
