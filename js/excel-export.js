@@ -46,7 +46,7 @@ function normalizarCuerpoDiario(ws, filaInicial) {
 }
 
 function limpiarZonaFechas(ws, columnaInicial, filaInicial, filaFinal) {
-  const ultimaColumna = Math.max(columnaInicial, ws.actualColumnCount || ws.dimensions.right || columnaInicial);
+  const ultimaColumna = ws.name === "Reporte de Acumulado" ? 388 : 218;
   ws.model.merges.slice().forEach((rango) => {
     const coincidencia = rango.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
     if (!coincidencia) return;
@@ -87,13 +87,14 @@ function prepararEncabezadosFechas(ws, fechas, columnaInicial, filaMes, filaDia,
   });
 }
 
-function quitarColoresDelCuerpo(ws, filaInicial) {
+function quitarColoresDelCuerpo(ws, filaInicial, ultimaColumna) {
   if (!ws) return;
   for (let numero = filaInicial; numero <= ws.rowCount; numero++) {
     const fila = ws.getRow(numero);
-    fila.eachCell({ includeEmpty: true }, (celda) => {
+    for (let columna = 1; columna <= ultimaColumna; columna++) {
+      const celda = fila.getCell(columna);
       celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
-    });
+    }
   }
 }
 
@@ -204,8 +205,8 @@ async function exportarConPlantilla(hojas, nombreArchivo) {
   }
   escribirResumenPlantilla(acumulado, resumenAcumulado?.filas || [], 15, "acumulado", fechasExcel, 9);
   escribirResumenPlantilla(deducido, resumenDeducido?.filas || [], 5, "deducido", fechasExcel, 4);
-  quitarColoresDelCuerpo(wb.getWorksheet("Reporte de Acumulado"), 15);
-  quitarColoresDelCuerpo(wb.getWorksheet("Reporte de horas deducidos"), 5);
+  quitarColoresDelCuerpo(wb.getWorksheet("Reporte de Acumulado"), 15, 388);
+  quitarColoresDelCuerpo(wb.getWorksheet("Reporte de horas deducidos"), 5, 218);
 
   const buffer = await wb.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
