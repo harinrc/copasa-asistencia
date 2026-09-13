@@ -13,6 +13,8 @@ let currentUser = null;
 let isAdmin = false;
 let empleados = [];
 let registros = [];
+let feriados = [];
+let horario = { entrada: "08:00", salida: "17:00", entradaSabado: "08:00", salidaSabado: "12:00" };
 
 const ETIQUETAS_TIPO = {
   normal: "Normal", subsidio: "Subsidio (INSS)", a_cuenta_acumulado: "A cuenta de acumulado",
@@ -64,6 +66,42 @@ function iniciarListeners() {
     renderBanco();
     renderDeducidas();
   });
+
+  onSnapshot(query(collection(db, "feriados"), orderBy("fecha", "desc")), (snap) => {
+    feriados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  });
+
+  onSnapshot(doc(db, "config", "horario"), (snap) => {
+    if (snap.exists()) {
+      horario = {
+        entrada: snap.data().entrada || "08:00",
+        salida: snap.data().salida || "17:00",
+        entradaSabado: snap.data().entradaSabado || "08:00",
+        salidaSabado: snap.data().salidaSabado || "12:00"
+      };
+    }
+  });
+}
+
+// Horario esperado ese día (null si es domingo/feriado: ahí no se asume nada por defecto)
+function horarioEsperado(fecha) {
+  const esFeriado = feriados.some(f => f.fecha === fecha);
+  const diaSemana = new Date(`${fecha}T00:00:00`).getDay();
+  if (esFeriado || diaSemana === 0) return null;
+  return diaSemana === 6
+    ? { entrada: horario.entradaSabado, salida: horario.salidaSabado }
+    : { entrada: horario.entrada, salida: horario.salida };
+}
+
+function listarFechas(desde, hasta) {
+  const fechas = [];
+  let actual = new Date(`${desde}T00:00:00`);
+  const fin = new Date(`${hasta}T00:00:00`);
+  while (actual <= fin) {
+    fechas.push(actual.toISOString().slice(0, 10));
+    actual.setDate(actual.getDate() + 1);
+  }
+  return fechas;
 }
 
 // ---------------- Render: Empleados ----------------
@@ -267,28 +305,50 @@ function renderDeducidas() {
 document.getElementById("btn-exportar").addEventListener("click", async () => {
   const btn = document.getElementById("btn-exportar");
   const { desde, hasta } = getRangoFechas();
+  if (!desde || !hasta) return alert("Elige la fecha 'Desde' y 'Hasta' del periodo primero.");
   const enPeriodo = registrosFiltrados(desde, hasta);
 
-  const filasDetalle = enPeriodo.map(r => {
-    const emp = empleados.find(e => e.id === r.employeeId);
-    return {
-      "Fecha": r.fecha,
-      "Cargo": emp?.cargo || "",
-      "Nombre": emp ? emp.nombre : r.employeeNombre || "",
-      "Tipo de día": ETIQUETAS_TIPO[r.tipo] || "Normal",
-      "Entrada": r.horaEntrada || "",
-      "Salida": r.horaSalida || "",
-      "Llegada tarde": formatoHHMM(r.llegadaTardeHoras || 0),
-      "Salida temprano": formatoHHMM(r.salidaTempranoHoras || 0),
-      "Hrs. acumuladas entrada": formatoHHMM(r.horasAcumuladasEntrada || 0),
-      "Hrs. acumuladas salida": formatoHHMM(r.horasAcumuladasSalidas || 0),
-      "Hrs. extra pagadas": formatoHHMM(r.horasExtraPagadas || 0),
-      "Hrs. deducidas de control de horas": formatoHHMM(r.horasDeducidasBanco || 0),
-      "Hrs. deducidas del salario": formatoHHMM(r.horasDeducidasSalario || 0),
-      "Hrs. deducidas de vacaciones": formatoHHMM(r.horasDeducidasVacaciones || 0),
-      "Total control de horas del día": formatoHHMM(gananciaBanco(r) - (r.horasDeducidasBanco || 0)),
-      "Observaciones": r.observaciones || ""
-    };
+  // Una pestaña por cada día del periodo (igual que el Excel original: 09-09,
+  // 08-09, etc.), con todos los colaboradores activos y el horario aplicado
+  // por defecto cuando nadie editó nada ese día.
+  const fechasPeriodo = listarFechas(desde, hasta);
+  const nombresUsados = new Set();
+  const hojasPorDia = fechasPeriodo.map(fecha => {
+    const horarioHoy = horarioEsperado(fecha);
+    const filas = empleados.filter(e => e.activo !== false).map(emp => {
+      const regReal = registros.find(r => r.employeeId === emp.id && r.fecha === fecha);
+      const reg = regReal || (horarioHoy ? {
+        tipo: "normal", horaEntrada: horarioHoy.entrada, horaSalida: horarioHoy.salida,
+        llegadaTardeHoras: 0, salidaTempranoHoras: 0, horasAcumuladasEntrada: 0,
+        horasAcumuladasSalidas: 0, horasExtraPagadas: 0, horasDeducidasBanco: 0,
+        horasDeducidasSalario: 0, horasDeducidasVacaciones: 0, observaciones: ""
+      } : null);
+      return {
+        "Cargo": emp.cargo || "",
+        "Nombre": emp.nombre,
+        "Tipo de día": ETIQUETAS_TIPO[reg?.tipo] || "—",
+        "Entrada": reg?.horaEntrada || "—",
+        "Salida": reg?.horaSalida || "—",
+        "Llegada tarde": formatoHHMM(reg?.llegadaTardeHoras || 0),
+        "Salida temprano": formatoHHMM(reg?.salidaTempranoHoras || 0),
+        "Hrs. acumuladas entrada": formatoHHMM(reg?.horasAcumuladasEntrada || 0),
+        "Hrs. acumuladas salida": formatoHHMM(reg?.horasAcumuladasSalidas || 0),
+        "Hrs. extra pagadas": formatoHHMM(reg?.horasExtraPagadas || 0),
+        "Ded. control de horas": formatoHHMM(reg?.horasDeducidasBanco || 0),
+        "Ded. salario": formatoHHMM(reg?.horasDeducidasSalario || 0),
+        "Ded. vacaciones": formatoHHMM(reg?.horasDeducidasVacaciones || 0),
+        "Total control de horas": formatoHHMM(gananciaBanco(reg || {}) - (reg?.horasDeducidasBanco || 0)),
+        "Observaciones": reg?.observaciones || ""
+      };
+    });
+
+    // Nombre de pestaña estilo "12-09"; evita duplicados si el periodo cruza años
+    const [anio, mes, dia] = fecha.split("-");
+    let nombreHoja = `${dia}-${mes}`;
+    if (nombresUsados.has(nombreHoja)) nombreHoja = `${dia}-${mes}-${anio}`;
+    nombresUsados.add(nombreHoja);
+
+    return { nombre: nombreHoja, filas };
   });
 
   const filasBanco = empleados.map(emp => {
@@ -326,7 +386,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   btn.textContent = "Generando...";
   try {
     await exportarExcelBonito([
-      { nombre: "Detalle", filas: filasDetalle },
+      ...hojasPorDia,
       { nombre: "Control de horas", filas: filasBanco },
       { nombre: "Horas deducidas", filas: filasDeducidas }
     ], nombreArchivo);
