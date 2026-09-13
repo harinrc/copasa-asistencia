@@ -203,9 +203,6 @@ function renderRegistroDiario() {
       <td>${formatoHHMM(reg?.salidaTempranoHoras || 0)}</td>
       <td>${formatoHHMM(reg?.horasAcumuladasEntrada || 0)}</td>
       <td>${formatoHHMM(reg?.horasAcumuladasSalidas || 0)}</td>
-      <td>${formatoHHMM(reg?.horasExtraPagadas || 0)}</td>
-      <td>${formatoHHMM(reg?.horasDeducidasSalario || 0)}</td>
-      <td>${formatoHHMM(reg?.horasDeducidasVacaciones || 0)}</td>
       <td>${formatoHHMM((reg?.horasAcumuladasEntrada || 0) + (reg?.horasAcumuladasSalidas || 0) - (reg?.horasDeducidasBanco || 0))}</td>
       <td>${escapeHtml(reg?.observaciones || "")}</td>
       <td class="admin-only">
