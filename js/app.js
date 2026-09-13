@@ -151,7 +151,7 @@ function abrirFormEmpleado(emp = null) {
   const html = `
     ${campo("f-nombre", "Nombre completo", "text", emp?.nombre || "")}
     ${campo("f-cargo", "Cargo", "text", emp?.cargo || "")}
-    ${campo("f-saldo-inicial", "Saldo inicial banco de horas HH:MM (migración del Excel)", "text", formatoHHMM(emp?.saldoInicialHoras ?? 0), 'placeholder="00:00" pattern="-?[0-9]+:[0-9]{2}"')}
+    ${campo("f-saldo-inicial", "Saldo inicial de control de horas HH:MM (migración del Excel)", "text", formatoHHMM(emp?.saldoInicialHoras ?? 0), 'placeholder="00:00" pattern="-?[0-9]+:[0-9]{2}"')}
     ${campo("f-saldo-fecha", "Fecha del saldo inicial", "date", emp?.saldoInicialFecha || fechaLocalHoy())}
   `;
   abrirModal(emp ? "Editar empleado" : "Nuevo empleado", html, async () => {

@@ -180,10 +180,12 @@ body {
   cursor: pointer;
 }
 .badge {
-  background: #10b981;
+  background: #fff;
+  color: var(--primary-dark);
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .topbar-nav {

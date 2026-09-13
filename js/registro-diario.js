@@ -120,7 +120,7 @@ function saldoBancoAntesDe(empId, fecha) {
 
 function mensajeSaldo(saldo) {
   if (saldo < 0) return `⚠️ Este colaborador ya DEBE ${formatoHHMM(Math.abs(saldo))} de horas acumuladas. Si continúas, la deuda aumentará.`;
-  return `💰 Banco disponible antes de este día: ${formatoHHMM(saldo)}.`;
+  return `💰 Control de horas disponible antes de este día: ${formatoHHMM(saldo)}.`;
 }
 
 function renderTemporadaIndicador() {
@@ -132,9 +132,9 @@ function renderTemporadaIndicador() {
   } else if (new Date(`${fecha}T00:00:00`).getDay() === 0) {
     el.textContent = "📅 Este día es domingo.";
   } else if (esTemporada(fecha)) {
-    el.textContent = "⚠️ Esta fecha está en temporada: las horas después del horario se pagan como extra (no se acumulan al banco).";
+    el.textContent = "⚠️ Esta fecha está en temporada: las horas después del horario se pagan como extra (no se acumulan al control de horas).";
   } else {
-    el.textContent = "Fuera de temporada: las horas después del horario se acumulan al banco de horas.";
+    el.textContent = "Fuera de temporada: las horas después del horario se acumulan al control de horas.";
   }
 }
 
@@ -196,7 +196,7 @@ function renderRegistroDiario() {
     tr.innerHTML = `
       <td>${escapeHtml(emp.cargo || "")}</td>
       <td>${escapeHtml(emp.nombre)}</td>
-      <td>${ETIQUETAS_TIPO[reg?.tipo] || "—"}${esAplicadoPorDefecto ? ` <span class="badge" style="background:#94a3b8;">por defecto</span>` : ""}${reg?.modoDiaEspecial ? ` <span class="badge" style="background:${reg.modoDiaEspecial === "banco" ? "#0ea5e9" : "#f59e0b"};">${reg.modoDiaEspecial === "banco" ? "banco" : "salario"}</span>` : ""}${reg?.coberturaTardanza === "vacaciones" ? ` <span class="badge" style="background:#a855f7;">a cta. vacaciones</span>` : ""}${reg?.constanciaMedica ? ` <span class="badge" style="background:#22c55e;">constancia médica</span>` : ""}</td>
+      <td>${ETIQUETAS_TIPO[reg?.tipo] || "—"}${esAplicadoPorDefecto ? ` <span class="badge" style="background:#94a3b8;color:#fff;">por defecto</span>` : ""}${reg?.modoDiaEspecial ? ` <span class="badge" style="background:${reg.modoDiaEspecial === "banco" ? "#0ea5e9" : "#f59e0b"};color:#fff;">${reg.modoDiaEspecial === "banco" ? "control" : "salario"}</span>` : ""}${reg?.coberturaTardanza === "vacaciones" ? ` <span class="badge" style="background:#a855f7;color:#fff;">a cta. vacaciones</span>` : ""}${reg?.constanciaMedica ? ` <span class="badge" style="background:var(--primary-dark);color:#fff;">constancia médica</span>` : ""}</td>
       <td>${reg?.horaEntrada || "—"}</td>
       <td>${reg?.horaSalida || "—"}</td>
       <td>${formatoHHMM(reg?.llegadaTardeHoras || 0)}</td>
@@ -321,7 +321,7 @@ document.addEventListener("click", async (e) => {
     abrirFormRegistro(emp, fecha, reg);
   }
   if (btn.dataset.action === "eliminar-registro") {
-    if (confirm("¿Eliminar este registro del día? Esto NO borra al empleado ni ningún otro dato, solo este día puntual. El banco de horas se recalculará al instante.")) {
+    if (confirm("¿Eliminar este registro del día? Esto NO borra al empleado ni ningún otro dato, solo este día puntual. El control de horas se recalculará al instante.")) {
       await deleteDoc(doc(db, "registros", btn.dataset.id));
     }
   }
@@ -353,7 +353,7 @@ function abrirFormRegistro(emp, fecha, reg = null) {
         <label for="f-modo-especial">Este día es domingo/feriado. ¿Cómo se paga lo trabajado?</label>
         <select id="f-modo-especial">
           <option value="pago" ${(!reg || reg.modoDiaEspecial !== "banco") ? "selected" : ""}>Pago de horas extra (salario)</option>
-          <option value="banco" ${reg?.modoDiaEspecial === "banco" ? "selected" : ""}>Horas acumuladas (banco)</option>
+          <option value="banco" ${reg?.modoDiaEspecial === "banco" ? "selected" : ""}>Horas acumuladas (control de horas)</option>
         </select>
       </div>` : `
       <div class="modal-body-field">
@@ -367,7 +367,7 @@ function abrirFormRegistro(emp, fecha, reg = null) {
       </div>`}
     </div>
     <div id="campos-acuenta" ${tipoActual !== "a_cuenta_acumulado" ? "hidden" : ""}>
-      ${campo("f-horas-deducidas", "Horas a descontar del banco HH:MM (día completo = 08:00)", "text", formatoHHMM(reg?.horasDeducidasBanco ?? 8), 'placeholder="08:00" pattern="-?[0-9]+:[0-9]{2}"')}
+      ${campo("f-horas-deducidas", "Horas a descontar del control de horas HH:MM (día completo = 08:00)", "text", formatoHHMM(reg?.horasDeducidasBanco ?? 8), 'placeholder="08:00" pattern="-?[0-9]+:[0-9]{2}"')}
       <p class="auth-hint" style="text-align:left;margin:0.35rem 0 0;">${mensajeSaldo(saldoBancoAntesDe(emp.id, fecha))}</p>
     </div>
     <div id="campos-falta" ${tipoActual !== "falta" ? "hidden" : ""}>
