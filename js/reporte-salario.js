@@ -6,6 +6,7 @@ import {
   collection, onSnapshot, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { formatoHHMM } from "./formato.js";
+import { exportarExcelBonito } from "./excel-export.js";
 
 let empleados = [];
 let registros = [];
@@ -73,7 +74,8 @@ function render() {
   });
 }
 
-document.getElementById("btn-exportar").addEventListener("click", () => {
+document.getElementById("btn-exportar").addEventListener("click", async () => {
+  const btn = document.getElementById("btn-exportar");
   const { desde, hasta } = getRangoFechas();
   const filas = filasPeriodo().map(r => {
     const emp = empleados.find(e => e.id === r.employeeId);
@@ -85,9 +87,18 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
       "Observaciones": r.observaciones || ""
     };
   });
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), "Deducido a salario");
-  XLSX.writeFile(wb, `Deducido_Salario_${desde || "inicio"}_a_${hasta || "hoy"}.xlsx`);
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Generando...";
+  try {
+    await exportarExcelBonito(
+      [{ nombre: "Deducido a salario", filas }],
+      `Deducido_Salario_${desde || "inicio"}_a_${hasta || "hoy"}.xlsx`
+    );
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
 });
 
 function escapeHtml(str) {

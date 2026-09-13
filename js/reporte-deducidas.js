@@ -5,6 +5,7 @@ import {
   collection, onSnapshot, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { formatoHHMM } from "./formato.js";
+import { exportarExcelBonito } from "./excel-export.js";
 
 let empleados = [];
 let registros = [];
@@ -92,7 +93,8 @@ function renderGrid() {
 }
 
 // ---------------- Exportar a Excel ----------------
-document.getElementById("btn-exportar").addEventListener("click", () => {
+document.getElementById("btn-exportar").addEventListener("click", async () => {
+  const btn = document.getElementById("btn-exportar");
   const { desde, hasta } = getRangoFechas();
   if (!desde || !hasta) return alert("Elige un rango de fechas primero.");
   const fechas = listarFechas(desde, hasta);
@@ -107,9 +109,18 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
     return fila;
   });
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), "Control de horas - Deducido");
-  XLSX.writeFile(wb, `Reporte_Control_Horas_Deducido_${desde}_a_${hasta}.xlsx`);
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Generando...";
+  try {
+    await exportarExcelBonito(
+      [{ nombre: "Control de horas - Deducido", filas }],
+      `Reporte_Control_Horas_Deducido_${desde}_a_${hasta}.xlsx`
+    );
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
 });
 
 function escapeHtml(str) {

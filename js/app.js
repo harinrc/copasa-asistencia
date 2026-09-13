@@ -7,6 +7,7 @@ import {
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { formatoHHMM, parseHHMM, formatoDiasHoras, fechaLocalHoy } from "./formato.js";
+import { exportarExcelBonito } from "./excel-export.js";
 
 let currentUser = null;
 let isAdmin = false;
@@ -263,7 +264,8 @@ function renderDeducidas() {
 }
 
 // ---------------- Exportar a Excel ----------------
-document.getElementById("btn-exportar").addEventListener("click", () => {
+document.getElementById("btn-exportar").addEventListener("click", async () => {
+  const btn = document.getElementById("btn-exportar");
   const { desde, hasta } = getRangoFechas();
   const enPeriodo = registrosFiltrados(desde, hasta);
 
@@ -318,13 +320,20 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
       };
     });
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasDetalle), "Detalle");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasBanco), "Control de horas");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filasDeducidas), "Horas deducidas");
-
   const nombreArchivo = `Reporte_Asistencia_${desde || "inicio"}_a_${hasta || "hoy"}.xlsx`;
-  XLSX.writeFile(wb, nombreArchivo);
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Generando...";
+  try {
+    await exportarExcelBonito([
+      { nombre: "Detalle", filas: filasDetalle },
+      { nombre: "Control de horas", filas: filasBanco },
+      { nombre: "Horas deducidas", filas: filasDeducidas }
+    ], nombreArchivo);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
 });
 
 // ---------------- Utilidades ----------------
