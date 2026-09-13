@@ -24,6 +24,24 @@ Los colores (rojo COPASA) están centralizados en las variables `--primary` y
 `--primary-dark` al inicio de [css/styles.css](css/styles.css) — cámbialos
 ahí si el rojo exacto de tu marca es distinto.
 
+## App instalable (PWA)
+
+El sistema se puede "instalar" como si fuera una app nativa en **Windows** y
+**Android** (en iPhone/iOS, Safari no ofrece este botón — ahí solo se puede
+agregar a inicio manualmente desde el menú compartir, es una limitación de
+Apple, no del sistema).
+
+- [manifest.webmanifest](manifest.webmanifest) define el nombre, ícono y
+  colores de la app instalada. Los íconos (`img/icon-192.png` e
+  `img/icon-512.png`) se generan a partir de `img/logo.png` — si cambias el
+  logo, regenera estos dos archivos del mismo tamaño.
+- [sw.js](sw.js) es el service worker (obligatorio para que el navegador
+  considere la página instalable). Usa "red primero, caché de respaldo", así
+  que siempre se ve la versión más reciente cuando hay internet.
+- [js/pwa.js](js/pwa.js) muestra un botón **"⬇️ Instalar app"** en la barra
+  superior cuando el navegador detecta que se puede instalar, y lo oculta
+  automáticamente si ya está instalada o después de instalarla.
+
 ## Estructura de páginas
 
 Cada sección vive en su propia página (más fácil de usar y más liviano con

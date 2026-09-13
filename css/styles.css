@@ -187,6 +187,22 @@ body {
   border-radius: 6px;
   cursor: pointer;
 }
+
+body > #btn-instalar-app {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 100;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.2rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
 .badge {
   background: #fff;
   color: var(--primary-dark);
