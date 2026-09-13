@@ -13,6 +13,10 @@ const NOMBRE_PLANTILLA = "REPORTE DE ASISTENCIA DEL 27 DE AGOSTO AL 08 DE SEPTIE
 const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const DIAS_SEMANA = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
 
+function numeroColumna(letras) {
+  return letras.split("").reduce((total, letra) => total * 26 + letra.charCodeAt(0) - 64, 0);
+}
+
 function bordeCompleto() {
   const estilo = { style: "thin", color: { argb: COLOR_BORDE } };
   return { top: estilo, left: estilo, bottom: estilo, right: estilo };
@@ -45,7 +49,7 @@ function limpiarZonaFechas(ws, columnaInicial, filaInicial, filaFinal) {
   ws.model.merges.slice().forEach((rango) => {
     const coincidencia = rango.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
     if (!coincidencia) return;
-    const inicio = ws.getColumn(coincidencia[1]).number;
+    const inicio = numeroColumna(coincidencia[1]);
     if (inicio >= columnaInicial) ws.unMergeCells(rango);
   });
   for (let filaNumero = filaInicial; filaNumero <= filaFinal; filaNumero++) {
