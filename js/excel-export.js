@@ -46,6 +46,7 @@ function normalizarCuerpoDiario(ws, filaInicial) {
 }
 
 function limpiarZonaFechas(ws, columnaInicial, filaInicial, filaFinal) {
+  const ultimaColumna = Math.max(columnaInicial, ws.actualColumnCount || ws.dimensions.right || columnaInicial);
   ws.model.merges.slice().forEach((rango) => {
     const coincidencia = rango.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
     if (!coincidencia) return;
@@ -54,7 +55,7 @@ function limpiarZonaFechas(ws, columnaInicial, filaInicial, filaFinal) {
   });
   for (let filaNumero = filaInicial; filaNumero <= filaFinal; filaNumero++) {
     const fila = ws.getRow(filaNumero);
-    for (let columna = columnaInicial; columna <= ws.columnCount; columna++) {
+    for (let columna = columnaInicial; columna <= ultimaColumna; columna++) {
       const celda = fila.getCell(columna);
       celda.value = null;
       celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
