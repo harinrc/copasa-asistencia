@@ -6,7 +6,7 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { formatoHHMM, parseHHMM, formatoDiasHoras, fechaLocalHoy } from "./formato.js";
+import { formatoHHMM, parseHHMM, formatoDiasHoras, fechaLocalHoy, formatoHora12 } from "./formato.js";
 import { exportarExcelBonito } from "./excel-export.js";
 
 let currentUser = null;
@@ -363,8 +363,8 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       return {
         "Cargo": emp.cargo || "",
         "Nombre": emp.nombre,
-        "Entrada": reg?.horaEntrada || "—",
-        "Salida": reg?.horaSalida || "—",
+        "Entrada": reg?.horaEntrada ? formatoHora12(reg.horaEntrada) : "—",
+        "Salida": reg?.horaSalida ? formatoHora12(reg.horaSalida) : "—",
         "Llegada tarde": formatoHHMM(reg?.llegadaTardeHoras || 0),
         "Salida temprano": formatoHHMM(reg?.salidaTempranoHoras || 0),
         "Hrs. acumuladas entrada": formatoHHMM(reg?.horasAcumuladasEntrada || 0),
@@ -419,10 +419,8 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
     const fila = {
       "Empleado": emp.nombre,
       "Cargo": emp.cargo || "",
-      "Saldo inicial": formatoHHMM(emp.saldoInicialHoras || 0),
       "Ganado en periodo": formatoHHMM(ganadoPeriodo),
       "Gastado en periodo": formatoHHMM(gastadoPeriodo),
-      "Saldo final": formatoHHMM(saldoFinal),
       "Días disponibles": formatoDiasHoras(saldoFinal),
       "Días gozados en periodo": propios.filter(r => r.tipo === "a_cuenta_acumulado").length
     };
@@ -447,8 +445,8 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   try {
     await exportarExcelBonito([
       ...hojasPorDia,
-      { nombre: "Control de horas", titulo: `REPORTE DE CONTROL DE HORAS DEL ${desde} AL ${hasta}.`, filas: filasBanco },
-      { nombre: "Horas deducidas", titulo: `REPORTE DE HORAS DEDUCIDAS DEL ${desde} AL ${hasta}.`, filas: filasDeducidas }
+      { nombre: "Control de horas", titulo: `REPORTE DE CONTROL DE HORAS DEL ${desde} AL ${hasta}.`, filas: filasBanco, colorPestana: "FF8F101F" },
+      { nombre: "Horas deducidas", titulo: `REPORTE DE HORAS DEDUCIDAS DEL ${desde} AL ${hasta}.`, filas: filasDeducidas, colorPestana: "FFB71C1C" }
     ], nombreArchivo);
   } finally {
     btn.disabled = false;

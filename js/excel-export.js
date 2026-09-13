@@ -40,6 +40,7 @@ export async function exportarExcelBonito(hojas, nombreArchivo) {
     const ws = wb.addWorksheet(nombre.slice(0, 31), {
       views: [{ state: "frozen", ySplit: titulo ? 2 : 1 }]
     });
+    ws.properties.tabColor = { argb: hoja.colorPestana || COLOR_ENCABEZADO };
 
     ws.columns = columnas.map((c) => ({
       key: c,

@@ -29,6 +29,18 @@ export function parseHHMM(texto) {
   return negativo ? -decimal : decimal;
 }
 
+// "HH:MM" 24h (ej. "17:00") -> "hh:mm AM/PM" (ej. "05:00 PM"). Para mostrar
+// horas de entrada/salida de forma más legible (ej. en el Excel exportado).
+export function formatoHora12(hhmm) {
+  if (!hhmm) return "";
+  const [h, m] = hhmm.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return hhmm;
+  const periodo = h >= 12 ? "PM" : "AM";
+  let h12 = h % 12;
+  if (h12 === 0) h12 = 12;
+  return `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${periodo}`;
+}
+
 // Decimal (ej. 9.5) -> "1 día y 1 hora" (jornada de 8 horas = 1 día). Admite negativos.
 export function formatoDiasHoras(decimalHoras, horasPorDia = 8) {
   const horas = Number(decimalHoras) || 0;
