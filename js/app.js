@@ -425,7 +425,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       "Gastado en periodo": formatoHHMM(gastadoPeriodo),
       "Saldo final": formatoHHMM(saldoFinal),
       "Días disponibles": formatoDiasHoras(saldoFinal),
-      "Días gozados en periodo": propios.filter(r => r.tipo === "a_cuenta_acumulado").length
+      "Días gozados en periodo": propios.filter(r => r.tipo === "a_cuenta_acumulado").length || ""
     };
     fechasPeriodo.forEach(f => {
       fila[etiquetaFecha(f)] = celdaAcumuladoTexto(registros.find(r => r.employeeId === emp.id && r.fecha === f));
