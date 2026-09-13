@@ -21,6 +21,26 @@ const ETIQUETAS_TIPO = {
   falta: "Falta", permiso: "Permiso", vacaciones: "Vacaciones"
 };
 
+const MESES_LARGOS = [
+  "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+  "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+];
+
+// Color de franja para cada tipo de día especial (igual estilo que el Excel original)
+const COLOR_TIPO_ESPECIAL = {
+  subsidio: "FF8BC34A",          // verde
+  a_cuenta_acumulado: "FF29B6F6", // azul
+  falta: "FFEF5350",              // rojo
+  permiso: "FFAB47BC",            // morado
+  vacaciones: "FF26A69A"          // verde azulado
+};
+
+const COLUMNAS_REGISTRO_DIARIO = [
+  "Cargo", "Nombre", "Entrada", "Salida", "Llegada tarde", "Salida temprano",
+  "Hrs. acumuladas entrada", "Hrs. acumuladas salida", "Hrs. extra pagadas",
+  "Ded. control de horas", "Ded. salario", "Ded. vacaciones", "Total control de horas", "Observaciones"
+];
+
 // ---------------- Auth guard ----------------
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -323,10 +343,21 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
         horasAcumuladasSalidas: 0, horasExtraPagadas: 0, horasDeducidasBanco: 0,
         horasDeducidasSalario: 0, horasDeducidasVacaciones: 0, observaciones: ""
       } : null);
+
+      // Días especiales (Subsidio, A cuenta de acumulado, Falta, Permiso,
+      // Vacaciones) se muestran como una franja de color de una sola línea,
+      // igual que en el Excel original.
+      if (reg && reg.tipo !== "normal" && COLOR_TIPO_ESPECIAL[reg.tipo]) {
+        return {
+          "Cargo": emp.cargo || "",
+          "Nombre": emp.nombre,
+          _especial: { texto: ETIQUETAS_TIPO[reg.tipo].toUpperCase(), color: COLOR_TIPO_ESPECIAL[reg.tipo] }
+        };
+      }
+
       return {
         "Cargo": emp.cargo || "",
         "Nombre": emp.nombre,
-        "Tipo de día": ETIQUETAS_TIPO[reg?.tipo] || "—",
         "Entrada": reg?.horaEntrada || "—",
         "Salida": reg?.horaSalida || "—",
         "Llegada tarde": formatoHHMM(reg?.llegadaTardeHoras || 0),
@@ -348,7 +379,9 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
     if (nombresUsados.has(nombreHoja)) nombreHoja = `${dia}-${mes}-${anio}`;
     nombresUsados.add(nombreHoja);
 
-    return { nombre: nombreHoja, filas };
+    const titulo = `REPORTE DE ASISTENCIA ${Number(dia)} DE ${MESES_LARGOS[Number(mes) - 1]} DEL ${anio}.`;
+
+    return { nombre: nombreHoja, titulo, columnas: COLUMNAS_REGISTRO_DIARIO, filas };
   });
 
   const filasBanco = empleados.map(emp => {
@@ -387,8 +420,8 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   try {
     await exportarExcelBonito([
       ...hojasPorDia,
-      { nombre: "Control de horas", filas: filasBanco },
-      { nombre: "Horas deducidas", filas: filasDeducidas }
+      { nombre: "Control de horas", titulo: `REPORTE DE CONTROL DE HORAS DEL ${desde} AL ${hasta}.`, filas: filasBanco },
+      { nombre: "Horas deducidas", titulo: `REPORTE DE HORAS DEDUCIDAS DEL ${desde} AL ${hasta}.`, filas: filasDeducidas }
     ], nombreArchivo);
   } finally {
     btn.disabled = false;

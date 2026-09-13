@@ -114,7 +114,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   btn.textContent = "Generando...";
   try {
     await exportarExcelBonito(
-      [{ nombre: "Control de horas - Deducido", filas }],
+      [{ nombre: "Control de horas - Deducido", titulo: `REPORTE DE HORAS DEDUCIDAS DEL ${desde} AL ${hasta}.`, filas }],
       `Reporte_Control_Horas_Deducido_${desde}_a_${hasta}.xlsx`
     );
   } finally {

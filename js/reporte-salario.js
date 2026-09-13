@@ -92,7 +92,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   btn.textContent = "Generando...";
   try {
     await exportarExcelBonito(
-      [{ nombre: "Deducido a salario", filas }],
+      [{ nombre: "Deducido a salario", titulo: `DEDUCIDO A CUENTA DE SALARIO DEL ${desde || "inicio"} AL ${hasta || "hoy"}.`, filas }],
       `Deducido_Salario_${desde || "inicio"}_a_${hasta || "hoy"}.xlsx`
     );
   } finally {
