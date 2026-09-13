@@ -5,6 +5,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import {
   collection, onSnapshot, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { formatoHHMM, formatoDiasHoras } from "./formato.js";
 
 let empleados = [];
 let registros = [];
@@ -69,17 +70,17 @@ function celdaAcumulado(reg) {
     case "falta": return { texto: "FALTA", clase: "celda-especial" };
     case "permiso": return { texto: "PERM", clase: "celda-especial" };
     case "vacaciones": return { texto: "VAC", clase: "celda-especial" };
-    case "a_cuenta_acumulado": return { texto: `-${(reg.horasDeducidasBanco || 0).toFixed(2)}`, clase: "celda-deduccion" };
+    case "a_cuenta_acumulado": return { texto: `-${formatoHHMM(reg.horasDeducidasBanco || 0)}`, clase: "celda-deduccion" };
     default: {
       const g = gananciaBanco(reg);
-      return g > 0 ? { texto: g.toFixed(2), clase: "celda-normal" } : { texto: "0.00", clase: "celda-vacia" };
+      return g > 0 ? { texto: formatoHHMM(g), clase: "celda-normal" } : { texto: "00:00", clase: "celda-vacia" };
     }
   }
 }
 
 function celdaDeducida(reg) {
   if (!reg || !(reg.horasDeducidasBanco > 0)) return { texto: "—", clase: "celda-vacia" };
-  return { texto: reg.horasDeducidasBanco.toFixed(2), clase: "celda-deduccion" };
+  return { texto: formatoHHMM(reg.horasDeducidasBanco), clase: "celda-deduccion" };
 }
 
 function calcularBancoEmpleado(emp, hasta) {
@@ -123,11 +124,11 @@ function renderGrid(tablaId, fechas, celdaFn, conResumen) {
       const gastadoPeriodo = round2(enPeriodo.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
       const saldoFinal = calcularBancoEmpleado(emp, hasta);
       resumenHtml = `
-        <td class="resumen">${(emp.saldoInicialHoras || 0).toFixed(2)}</td>
-        <td class="resumen">${ganadoPeriodo.toFixed(2)}</td>
-        <td class="resumen">${gastadoPeriodo.toFixed(2)}</td>
-        <td class="resumen">${saldoFinal.toFixed(2)}</td>
-        <td class="resumen">${round2(saldoFinal / 8).toFixed(2)}</td>`;
+        <td class="resumen">${formatoHHMM(emp.saldoInicialHoras || 0)}</td>
+        <td class="resumen">${formatoHHMM(ganadoPeriodo)}</td>
+        <td class="resumen">${formatoHHMM(gastadoPeriodo)}</td>
+        <td class="resumen">${formatoHHMM(saldoFinal)}</td>
+        <td class="resumen">${formatoDiasHoras(saldoFinal)}</td>`;
     }
     const celdas = fechas.map(f => {
       const reg = propios.find(r => r.fecha === f);
@@ -153,11 +154,12 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
       const fila = { "Empleado": emp.nombre, "Cargo": emp.cargo || "" };
       if (conResumen) {
         const enPeriodo = propios.filter(r => r.fecha >= desde && r.fecha <= hasta);
-        fila["Saldo inicial"] = emp.saldoInicialHoras || 0;
-        fila["Ganado periodo"] = round2(enPeriodo.reduce((a, r) => a + gananciaBanco(r), 0));
-        fila["Gastado periodo"] = round2(enPeriodo.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
-        fila["Saldo final"] = calcularBancoEmpleado(emp, hasta);
-        fila["Días disponibles"] = round2(fila["Saldo final"] / 8);
+        fila["Saldo inicial"] = formatoHHMM(emp.saldoInicialHoras || 0);
+        fila["Ganado periodo"] = formatoHHMM(round2(enPeriodo.reduce((a, r) => a + gananciaBanco(r), 0)));
+        fila["Gastado periodo"] = formatoHHMM(round2(enPeriodo.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0)));
+        const saldoFinal = calcularBancoEmpleado(emp, hasta);
+        fila["Saldo final"] = formatoHHMM(saldoFinal);
+        fila["Días disponibles"] = formatoDiasHoras(saldoFinal);
       }
       fechas.forEach(f => {
         const reg = propios.find(r => r.fecha === f);

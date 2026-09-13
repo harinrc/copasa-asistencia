@@ -5,6 +5,7 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { formatoHHMM, parseHHMM, formatoDiasHoras } from "./formato.js";
 
 let currentUser = null;
 let isAdmin = false;
@@ -203,7 +204,7 @@ function renderEmpleados() {
     tr.innerHTML = `
       <td>${escapeHtml(emp.nombre)}</td>
       <td>${escapeHtml(emp.cargo || "")}</td>
-      <td>${(emp.saldoInicialHoras || 0).toFixed(2)} hrs</td>
+      <td>${formatoHHMM(emp.saldoInicialHoras || 0)} hrs</td>
       <td>${emp.activo === false ? "Inactivo" : "Activo"}</td>
       <td class="admin-only">
         <button class="icon-btn edit" data-action="edit-empleado" data-id="${emp.id}">✏️</button>
@@ -264,11 +265,11 @@ function renderRegistroDiario() {
       <td>${ETIQUETAS_TIPO[reg?.tipo] || "—"}</td>
       <td>${reg?.horaEntrada || "—"}</td>
       <td>${reg?.horaSalida || "—"}</td>
-      <td>${(reg?.llegadaTardeHoras || 0).toFixed(2)}</td>
-      <td>${(reg?.horasAcumuladasEntrada || 0).toFixed(2)}</td>
-      <td>${(reg?.horasAcumuladasSalidas || 0).toFixed(2)}</td>
-      <td>${(reg?.horasExtraPagadas || 0).toFixed(2)}</td>
-      <td>${((reg?.horasAcumuladasEntrada || 0) + (reg?.horasAcumuladasSalidas || 0) - (reg?.horasDeducidasBanco || 0)).toFixed(2)}</td>
+      <td>${formatoHHMM(reg?.llegadaTardeHoras || 0)}</td>
+      <td>${formatoHHMM(reg?.horasAcumuladasEntrada || 0)}</td>
+      <td>${formatoHHMM(reg?.horasAcumuladasSalidas || 0)}</td>
+      <td>${formatoHHMM(reg?.horasExtraPagadas || 0)}</td>
+      <td>${formatoHHMM((reg?.horasAcumuladasEntrada || 0) + (reg?.horasAcumuladasSalidas || 0) - (reg?.horasDeducidasBanco || 0))}</td>
       <td>${escapeHtml(reg?.observaciones || "")}</td>
       <td>
         <button class="icon-btn edit" data-action="editar-registro" data-emp="${emp.id}" data-fecha="${fecha}">✏️</button>
@@ -395,14 +396,14 @@ function abrirFormEmpleado(emp = null) {
   const html = `
     ${campo("f-nombre", "Nombre completo", "text", emp?.nombre || "")}
     ${campo("f-cargo", "Cargo", "text", emp?.cargo || "")}
-    ${campo("f-saldo-inicial", "Saldo inicial banco de horas (migración del Excel)", "number", emp?.saldoInicialHoras ?? 0, 'step="0.25"')}
+    ${campo("f-saldo-inicial", "Saldo inicial banco de horas HH:MM (migración del Excel)", "text", formatoHHMM(emp?.saldoInicialHoras ?? 0), 'placeholder="00:00" pattern="-?[0-9]+:[0-9]{2}"')}
     ${campo("f-saldo-fecha", "Fecha del saldo inicial", "date", emp?.saldoInicialFecha || new Date().toISOString().slice(0, 10))}
   `;
   abrirModal(emp ? "Editar empleado" : "Nuevo empleado", html, async () => {
     const data = {
       nombre: document.getElementById("f-nombre").value.trim(),
       cargo: document.getElementById("f-cargo").value.trim(),
-      saldoInicialHoras: parseFloat(document.getElementById("f-saldo-inicial").value) || 0,
+      saldoInicialHoras: parseHHMM(document.getElementById("f-saldo-inicial").value),
       saldoInicialFecha: document.getElementById("f-saldo-fecha").value,
       activo: true
     };
@@ -434,7 +435,7 @@ function abrirFormRegistro(emp, fecha, reg = null) {
       ${campo("f-salida", "Hora de salida (informativo si es subsidio)", "time", reg?.horaSalida || "")}
     </div>
     <div id="campos-acuenta" ${tipoActual !== "a_cuenta_acumulado" ? "hidden" : ""}>
-      ${campo("f-horas-deducidas", "Horas a descontar del banco (parcial o día completo = 8)", "number", reg?.horasDeducidasBanco ?? 8, 'step="0.25"')}
+      ${campo("f-horas-deducidas", "Horas a descontar del banco HH:MM (día completo = 08:00)", "text", formatoHHMM(reg?.horasDeducidasBanco ?? 8), 'placeholder="08:00" pattern="-?[0-9]+:[0-9]{2}"')}
     </div>
     <div class="modal-body-field">
       <label for="f-notas">Observaciones</label>
@@ -447,7 +448,7 @@ function abrirFormRegistro(emp, fecha, reg = null) {
     const horaEntrada = document.getElementById("f-entrada")?.value || "";
     const horaSalida = document.getElementById("f-salida")?.value || "";
     const horasDeducidasBanco = tipo === "a_cuenta_acumulado"
-      ? parseFloat(document.getElementById("f-horas-deducidas").value) || 0
+      ? parseHHMM(document.getElementById("f-horas-deducidas").value)
       : 0;
 
     let calculo = { llegadaTardeHoras: 0, horasAcumuladasEntrada: 0, horasAcumuladasSalidas: 0, horasExtraPagadas: 0 };
@@ -533,11 +534,11 @@ function renderBanco() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${escapeHtml(emp.nombre)}</td>
-      <td>${(emp.saldoInicialHoras || 0).toFixed(2)}</td>
-      <td>${ganadoPeriodo.toFixed(2)}</td>
-      <td>${gastadoPeriodo.toFixed(2)}</td>
-      <td>${saldoFinal.toFixed(2)}</td>
-      <td>${(saldoFinal / 8).toFixed(2)}</td>
+      <td>${formatoHHMM(emp.saldoInicialHoras || 0)}</td>
+      <td>${formatoHHMM(ganadoPeriodo)}</td>
+      <td>${formatoHHMM(gastadoPeriodo)}</td>
+      <td>${formatoHHMM(saldoFinal)}</td>
+      <td>${formatoDiasHoras(saldoFinal)}</td>
       <td>${diasGozados}</td>`;
     tbody.appendChild(tr);
   });
@@ -556,7 +557,7 @@ function renderDeducidas() {
       tr.innerHTML = `
         <td>${escapeHtml(emp ? emp.nombre : r.employeeNombre || "")}</td>
         <td>${r.fecha}</td>
-        <td>${(r.horasDeducidasBanco || 0).toFixed(2)}</td>
+        <td>${formatoHHMM(r.horasDeducidasBanco || 0)}</td>
         <td>${escapeHtml(r.observaciones || "")}</td>`;
       tbody.appendChild(tr);
     });
@@ -576,12 +577,12 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
       "Tipo de día": ETIQUETAS_TIPO[r.tipo] || "Normal",
       "Entrada": r.horaEntrada || "",
       "Salida": r.horaSalida || "",
-      "Llegada tarde (hrs)": r.llegadaTardeHoras || 0,
-      "Hrs. acumuladas entrada": r.horasAcumuladasEntrada || 0,
-      "Hrs. acumuladas salida": r.horasAcumuladasSalidas || 0,
-      "Hrs. extra pagadas": r.horasExtraPagadas || 0,
-      "Hrs. deducidas del banco": r.horasDeducidasBanco || 0,
-      "Total banco del día": round2(gananciaBanco(r) - (r.horasDeducidasBanco || 0)),
+      "Llegada tarde": formatoHHMM(r.llegadaTardeHoras || 0),
+      "Hrs. acumuladas entrada": formatoHHMM(r.horasAcumuladasEntrada || 0),
+      "Hrs. acumuladas salida": formatoHHMM(r.horasAcumuladasSalidas || 0),
+      "Hrs. extra pagadas": formatoHHMM(r.horasExtraPagadas || 0),
+      "Hrs. deducidas del banco": formatoHHMM(r.horasDeducidasBanco || 0),
+      "Total banco del día": formatoHHMM(gananciaBanco(r) - (r.horasDeducidasBanco || 0)),
       "Observaciones": r.observaciones || ""
     };
   });
@@ -594,11 +595,11 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
     return {
       "Empleado": emp.nombre,
       "Cargo": emp.cargo || "",
-      "Saldo inicial": emp.saldoInicialHoras || 0,
-      "Ganado en periodo": ganadoPeriodo,
-      "Gastado en periodo": gastadoPeriodo,
-      "Saldo final": saldoFinal,
-      "Días disponibles": round2(saldoFinal / 8),
+      "Saldo inicial": formatoHHMM(emp.saldoInicialHoras || 0),
+      "Ganado en periodo": formatoHHMM(ganadoPeriodo),
+      "Gastado en periodo": formatoHHMM(gastadoPeriodo),
+      "Saldo final": formatoHHMM(saldoFinal),
+      "Días disponibles": formatoDiasHoras(saldoFinal),
       "Días gozados en periodo": propios.filter(r => r.tipo === "a_cuenta_acumulado").length
     };
   });
@@ -610,7 +611,7 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
       return {
         "Empleado": emp ? emp.nombre : r.employeeNombre || "",
         "Fecha": r.fecha,
-        "Horas deducidas": r.horasDeducidasBanco || 0,
+        "Horas deducidas": formatoHHMM(r.horasDeducidasBanco || 0),
         "Observaciones": r.observaciones || ""
       };
     });
