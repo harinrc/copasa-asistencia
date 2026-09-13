@@ -317,14 +317,20 @@ body > #btn-instalar-app {
 
 /* Contenedor que permite deslizar solo la tabla, dejando fijo el resto de la tarjeta */
 .table-scroll {
+  display: block;
+  width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   min-width: 0;
 }
 .table-scroll .data-table {
   width: max-content;
-  min-width: 100%;
+  min-width: max-content;
   margin-top: 0;
+}
+.table-scroll .data-table th,
+.table-scroll .data-table td {
+  white-space: nowrap;
 }
 
 /* ---------- Cuadrícula día por día (reportes.html) ---------- */
