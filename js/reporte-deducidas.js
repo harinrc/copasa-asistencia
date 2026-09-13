@@ -81,7 +81,8 @@ function renderGrid() {
     const celdas = fechas.map(f => {
       const reg = propios.find(r => r.fecha === f);
       const { texto, clase } = celdaDeducida(reg);
-      return `<td class="${clase}">${texto}</td>`;
+      const titulo = reg?.observaciones ? ` title="${escapeHtml(reg.observaciones)}"` : "";
+      return `<td class="${clase}"${titulo}>${texto}</td>`;
     }).join("");
 
     const tr = document.createElement("tr");

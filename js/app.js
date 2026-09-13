@@ -245,6 +245,21 @@ function renderDeducidas() {
         <td>${escapeHtml(r.observaciones || "")}</td>`;
       tbody.appendChild(tr);
     });
+
+  const tbodyVac = document.querySelector("#tabla-vacaciones-horas tbody");
+  tbodyVac.innerHTML = "";
+  registrosFiltrados(desde, hasta)
+    .filter(r => (r.horasDeducidasVacaciones || 0) > 0)
+    .forEach(r => {
+      const emp = empleados.find(e => e.id === r.employeeId);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(emp ? emp.nombre : r.employeeNombre || "")}</td>
+        <td>${r.fecha}</td>
+        <td>${formatoHHMM(r.horasDeducidasVacaciones || 0)}</td>
+        <td>${escapeHtml(r.observaciones || "")}</td>`;
+      tbodyVac.appendChild(tr);
+    });
 }
 
 // ---------------- Exportar a Excel ----------------
@@ -262,10 +277,13 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
       "Entrada": r.horaEntrada || "",
       "Salida": r.horaSalida || "",
       "Llegada tarde": formatoHHMM(r.llegadaTardeHoras || 0),
+      "Salida temprano": formatoHHMM(r.salidaTempranoHoras || 0),
       "Hrs. acumuladas entrada": formatoHHMM(r.horasAcumuladasEntrada || 0),
       "Hrs. acumuladas salida": formatoHHMM(r.horasAcumuladasSalidas || 0),
       "Hrs. extra pagadas": formatoHHMM(r.horasExtraPagadas || 0),
       "Hrs. deducidas del banco": formatoHHMM(r.horasDeducidasBanco || 0),
+      "Hrs. deducidas del salario": formatoHHMM(r.horasDeducidasSalario || 0),
+      "Hrs. deducidas de vacaciones": formatoHHMM(r.horasDeducidasVacaciones || 0),
       "Total banco del día": formatoHHMM(gananciaBanco(r) - (r.horasDeducidasBanco || 0)),
       "Observaciones": r.observaciones || ""
     };

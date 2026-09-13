@@ -100,6 +100,29 @@ function horasJornadaEsperada(fecha) {
   return round2(Math.max(0, toMinutos(h.salida) - toMinutos(h.entrada)) / 60);
 }
 
+// ---------------- Saldo del banco de horas (para avisar deudas) ----------------
+function gananciaBanco(r) { return (r.horasAcumuladasEntrada || 0) + (r.horasAcumuladasSalidas || 0); }
+
+// Saldo del banco de un empleado justo ANTES de una fecha (no incluye ese día),
+// para poder avisar si ya debe horas antes de deducirle más.
+function saldoBancoAntesDe(empId, fecha) {
+  const emp = empleados.find(e => e.id === empId);
+  if (!emp) return 0;
+  const relevantes = registros.filter(r =>
+    r.employeeId === empId &&
+    (!emp.saldoInicialFecha || r.fecha >= emp.saldoInicialFecha) &&
+    r.fecha < fecha
+  );
+  const ganado = relevantes.reduce((a, r) => a + gananciaBanco(r), 0);
+  const gastado = relevantes.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0);
+  return round2((emp.saldoInicialHoras || 0) + ganado - gastado);
+}
+
+function mensajeSaldo(saldo) {
+  if (saldo < 0) return `⚠️ Este colaborador ya DEBE ${formatoHHMM(Math.abs(saldo))} de horas acumuladas. Si continúas, la deuda aumentará.`;
+  return `💰 Banco disponible antes de este día: ${formatoHHMM(saldo)}.`;
+}
+
 function renderTemporadaIndicador() {
   const fecha = document.getElementById("registro-fecha").value;
   const el = document.getElementById("temporada-indicador");
@@ -166,14 +189,14 @@ function renderRegistroDiario() {
       tipo: "normal", horaEntrada: horarioHoy.entrada, horaSalida: horarioHoy.salida,
       llegadaTardeHoras: 0, salidaTempranoHoras: 0, horasAcumuladasEntrada: 0,
       horasAcumuladasSalidas: 0, horasExtraPagadas: 0, horasDeducidasBanco: 0,
-      horasDeducidasSalario: 0, observaciones: ""
+      horasDeducidasSalario: 0, horasDeducidasVacaciones: 0, observaciones: ""
     } : null);
     const esAplicadoPorDefecto = !regReal && !!reg;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${escapeHtml(emp.cargo || "")}</td>
       <td>${escapeHtml(emp.nombre)}</td>
-      <td>${ETIQUETAS_TIPO[reg?.tipo] || "—"}${esAplicadoPorDefecto ? ` <span class="badge" style="background:#94a3b8;">por defecto</span>` : ""}${reg?.modoDiaEspecial ? ` <span class="badge" style="background:${reg.modoDiaEspecial === "banco" ? "#0ea5e9" : "#f59e0b"};">${reg.modoDiaEspecial === "banco" ? "banco" : "salario"}</span>` : ""}${reg?.constanciaMedica ? ` <span class="badge" style="background:#22c55e;">constancia médica</span>` : ""}</td>
+      <td>${ETIQUETAS_TIPO[reg?.tipo] || "—"}${esAplicadoPorDefecto ? ` <span class="badge" style="background:#94a3b8;">por defecto</span>` : ""}${reg?.modoDiaEspecial ? ` <span class="badge" style="background:${reg.modoDiaEspecial === "banco" ? "#0ea5e9" : "#f59e0b"};">${reg.modoDiaEspecial === "banco" ? "banco" : "salario"}</span>` : ""}${reg?.coberturaTardanza === "vacaciones" ? ` <span class="badge" style="background:#a855f7;">a cta. vacaciones</span>` : ""}${reg?.constanciaMedica ? ` <span class="badge" style="background:#22c55e;">constancia médica</span>` : ""}</td>
       <td>${reg?.horaEntrada || "—"}</td>
       <td>${reg?.horaSalida || "—"}</td>
       <td>${formatoHHMM(reg?.llegadaTardeHoras || 0)}</td>
@@ -182,6 +205,7 @@ function renderRegistroDiario() {
       <td>${formatoHHMM(reg?.horasAcumuladasSalidas || 0)}</td>
       <td>${formatoHHMM(reg?.horasExtraPagadas || 0)}</td>
       <td>${formatoHHMM(reg?.horasDeducidasSalario || 0)}</td>
+      <td>${formatoHHMM(reg?.horasDeducidasVacaciones || 0)}</td>
       <td>${formatoHHMM((reg?.horasAcumuladasEntrada || 0) + (reg?.horasAcumuladasSalidas || 0) - (reg?.horasDeducidasBanco || 0))}</td>
       <td>${escapeHtml(reg?.observaciones || "")}</td>
       <td class="admin-only">
@@ -333,11 +357,18 @@ function abrirFormRegistro(emp, fecha, reg = null) {
         </select>
       </div>` : `
       <div class="modal-body-field">
-        <label><input type="checkbox" id="f-constancia" ${reg?.constanciaMedica ? "checked" : ""} /> Trajo constancia médica/clínica (no se deduce del salario aunque haya llegado tarde o salido temprano)</label>
+        <label for="f-cobertura">Si llegó tarde o salió temprano, ¿cómo se cubre?</label>
+        <select id="f-cobertura">
+          <option value="salario" ${(!reg || reg.coberturaTardanza === "salario" || !reg.coberturaTardanza) ? "selected" : ""}>Se descuenta del salario</option>
+          <option value="vacaciones" ${reg?.coberturaTardanza === "vacaciones" ? "selected" : ""}>Se descuenta de sus vacaciones</option>
+          <option value="constancia" ${reg?.coberturaTardanza === "constancia" ? "selected" : ""}>Constancia médica/clínica (no se descuenta nada)</option>
+        </select>
+        <p class="auth-hint" style="text-align:left;margin:0.35rem 0 0;">Solo aplica si la hora de entrada/salida quedó fuera del horario. Si coincide con el horario normal, no se descuenta nada de todas formas.</p>
       </div>`}
     </div>
     <div id="campos-acuenta" ${tipoActual !== "a_cuenta_acumulado" ? "hidden" : ""}>
       ${campo("f-horas-deducidas", "Horas a descontar del banco HH:MM (día completo = 08:00)", "text", formatoHHMM(reg?.horasDeducidasBanco ?? 8), 'placeholder="08:00" pattern="-?[0-9]+:[0-9]{2}"')}
+      <p class="auth-hint" style="text-align:left;margin:0.35rem 0 0;">${mensajeSaldo(saldoBancoAntesDe(emp.id, fecha))}</p>
     </div>
     <div id="campos-falta" ${tipoActual !== "falta" ? "hidden" : ""}>
       ${campo("f-horas-salario", "Horas a deducir del salario HH:MM (día completo por defecto)", "text", formatoHHMM(reg?.horasDeducidasSalario ?? horasJornadaEsperada(fecha)), 'placeholder="08:00" pattern="-?[0-9]+:[0-9]{2}"')}
@@ -355,7 +386,7 @@ function abrirFormRegistro(emp, fecha, reg = null) {
     const horasDeducidasBanco = tipo === "a_cuenta_acumulado"
       ? parseHHMM(document.getElementById("f-horas-deducidas").value)
       : 0;
-    const constanciaMedica = document.getElementById("f-constancia")?.checked || false;
+    const coberturaTardanza = document.getElementById("f-cobertura")?.value || "salario";
 
     let calculo = { llegadaTardeHoras: 0, salidaTempranoHoras: 0, horasAcumuladasEntrada: 0, horasAcumuladasSalidas: 0, horasExtraPagadas: 0 };
     const modoDiaEspecial = document.getElementById("f-modo-especial")?.value || "pago";
@@ -364,12 +395,17 @@ function abrirFormRegistro(emp, fecha, reg = null) {
       calculo = calcularDia({ horaEntrada, horaSalida, fecha, modoDiaEspecial });
     }
 
-    // Deducción de SALARIO (no del banco): llegada tarde/salida temprano sin
-    // constancia médica, o el día completo si fue una falta injustificada.
+    // La llegada tarde/salida temprano se cubre de una sola forma: salario
+    // (por defecto), vacaciones, o se exonera con constancia médica.
+    const horasTardanza = round2((calculo.llegadaTardeHoras || 0) + (calculo.salidaTempranoHoras || 0));
     let horasDeducidasSalario = 0;
-    if (tipo === "normal" && !esDiaEspecial(fecha) && !constanciaMedica) {
-      horasDeducidasSalario = round2((calculo.llegadaTardeHoras || 0) + (calculo.salidaTempranoHoras || 0));
-    } else if (tipo === "falta") {
+    let horasDeducidasVacaciones = 0;
+    if (tipo === "normal" && !esDiaEspecial(fecha) && horasTardanza > 0) {
+      if (coberturaTardanza === "vacaciones") horasDeducidasVacaciones = horasTardanza;
+      else if (coberturaTardanza === "salario") horasDeducidasSalario = horasTardanza;
+      // "constancia": ambas quedan en 0, no se descuenta nada
+    }
+    if (tipo === "falta") {
       horasDeducidasSalario = parseHHMM(document.getElementById("f-horas-salario").value);
     }
 
@@ -382,9 +418,11 @@ function abrirFormRegistro(emp, fecha, reg = null) {
       horaEntrada: seGuardaHorario ? horaEntrada : "",
       horaSalida: seGuardaHorario ? horaSalida : "",
       modoDiaEspecial: tipo === "normal" && esDiaEspecial(fecha) ? modoDiaEspecial : "",
-      constanciaMedica: tipo === "normal" ? constanciaMedica : false,
+      coberturaTardanza: tipo === "normal" && !esDiaEspecial(fecha) ? coberturaTardanza : "",
+      constanciaMedica: tipo === "normal" && coberturaTardanza === "constancia",
       horasDeducidasBanco,
       horasDeducidasSalario,
+      horasDeducidasVacaciones,
       ...calculo,
       observaciones: document.getElementById("f-notas").value.trim(),
       actualizadoEn: serverTimestamp(),

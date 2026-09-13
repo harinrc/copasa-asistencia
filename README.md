@@ -42,20 +42,26 @@ Cada sección vive en su propia página (más fácil de usar y más liviano con
   excepciones del día: alguien con vacaciones, subsidio, permiso, horas
   acumuladas, llegada tarde, salida temprano, etc. Cálculo automático de:
   - **Llegada tarde** y **salida temprano**: minutos/horas fuera del horario
-    estándar. Por defecto son un descuento de **salario** (ver "Deducido a
-    cuenta de salario"), **no afectan el banco de horas**. Si la persona
-    marca la casilla **"Trajo constancia médica/clínica"**, esas horas se
-    siguen mostrando mostrando (para tener el dato) pero **no se descuentan
-    del salario**.
+    estándar. Al guardarlas, eliges cómo se cubren:
+    - **Se descuenta del salario** (por defecto) — aparece en el reporte
+      "Deducido a cuenta de salario".
+    - **Se descuenta de sus vacaciones** — aparece en la sección "Horas
+      descontadas de vacaciones" del Dashboard.
+    - **Constancia médica/clínica** — la hora real se sigue mostrando (queda
+      la evidencia) pero **no se descuenta nada**, ni de salario ni de
+      vacaciones.
+    Ninguna de las tres opciones afecta el banco de horas.
   - **Horas acumuladas de entrada**: si llega antes de la hora estándar.
   - **Horas acumuladas de salida**: si sale después de la hora estándar
     **y no hay una temporada activa** ese día.
   - **Horas extra pagadas**: igual que las anteriores, pero **si hay una
     temporada activa** ese día, en vez de ir al banco se pagan directamente.
   - **Tipos de día especiales**: `Subsidio` (incapacidad del INSS, no
-    descuenta nada), `A cuenta de horas acumuladas` (gasta horas del banco),
-    `Falta` (ausencia sin aviso ni constancia — descuenta el día completo del
-    **salario**, editable), `Permiso`, `Vacaciones`.
+    descuenta nada), `A cuenta de horas acumuladas` (gasta horas del banco —
+    el formulario avisa si la persona ya debe horas o cuántas tiene
+    disponibles antes de descontar más), `Falta` (ausencia sin aviso ni
+    constancia — descuenta el día completo del **salario**, editable),
+    `Permiso`, `Vacaciones`.
 - **Temporadas**: rangos de fechas (ej. abril-junio, octubre-diciembre) donde
   las horas después del horario se pagan como extra en vez de acumularse al
   banco. Se activan/desactivan con un botón desde **Configuración**.
