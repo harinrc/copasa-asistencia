@@ -41,9 +41,8 @@ const COLOR_TIPO_ESPECIAL = {
 };
 
 const COLUMNAS_REGISTRO_DIARIO = [
-  "Cargo", "Nombre", "Entrada", "Salida", "Llegada tarde", "Salida temprano",
-  "Hrs. acumuladas entrada", "Hrs. acumuladas salida", "Hrs. extra pagadas",
-  "Ded. control de horas", "Ded. salario", "Ded. vacaciones", "Total control de horas", "Observaciones"
+  "Cargo", "Nombre", "Entrada", "Salida", "Llegada Tarde",
+  "HORAS ACUMULADAS ENTRADA", "HORAS ACUMULADAS SALIDAS", "Total", "Observaciones"
 ];
 
 // ---------------- Auth guard ----------------
@@ -365,15 +364,10 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
         "Nombre": emp.nombre,
         "Entrada": reg?.horaEntrada ? formatoHora12(reg.horaEntrada) : "—",
         "Salida": reg?.horaSalida ? formatoHora12(reg.horaSalida) : "—",
-        "Llegada tarde": formatoHHMM(reg?.llegadaTardeHoras || 0),
-        "Salida temprano": formatoHHMM(reg?.salidaTempranoHoras || 0),
-        "Hrs. acumuladas entrada": formatoHHMM(reg?.horasAcumuladasEntrada || 0),
-        "Hrs. acumuladas salida": formatoHHMM(reg?.horasAcumuladasSalidas || 0),
-        "Hrs. extra pagadas": formatoHHMM(reg?.horasExtraPagadas || 0),
-        "Ded. control de horas": formatoHHMM(reg?.horasDeducidasBanco || 0),
-        "Ded. salario": formatoHHMM(reg?.horasDeducidasSalario || 0),
-        "Ded. vacaciones": formatoHHMM(reg?.horasDeducidasVacaciones || 0),
-        "Total control de horas": formatoHHMM(gananciaBanco(reg || {}) - (reg?.horasDeducidasBanco || 0)),
+        "Llegada Tarde": formatoHHMM(reg?.llegadaTardeHoras || 0),
+        "HORAS ACUMULADAS ENTRADA": formatoHHMM(reg?.horasAcumuladasEntrada || 0),
+        "HORAS ACUMULADAS SALIDAS": formatoHHMM(reg?.horasAcumuladasSalidas || 0),
+        "Total": formatoHHMM(gananciaBanco(reg || {}) - (reg?.horasDeducidasBanco || 0)),
         "Observaciones": reg?.observaciones || ""
       };
     });
@@ -386,7 +380,15 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
 
     const titulo = `REPORTE DE ASISTENCIA ${Number(dia)} DE ${MESES_LARGOS[Number(mes) - 1]} DEL ${anio}.`;
 
-    return { nombre: nombreHoja, titulo, columnas: COLUMNAS_REGISTRO_DIARIO, filas };
+    return {
+      nombre: nombreHoja,
+      usarPlantilla: true,
+      titulo,
+      tituloColumna: 4,
+      anchos: [16.85546875, 43.140625, 20, 19.140625, 19.140625, 21.42578125, 17.5703125, 17.5703125, 26.140625],
+      columnas: COLUMNAS_REGISTRO_DIARIO,
+      filas
+    };
   });
 
   // Igual que las páginas "Acumuladas"/"Deducidas": una fila por colaborador
@@ -445,8 +447,8 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   try {
     await exportarExcelBonito([
       ...hojasPorDia,
-      { nombre: "Control de horas", titulo: `REPORTE DE CONTROL DE HORAS DEL ${desde} AL ${hasta}.`, filas: filasBanco, colorPestana: "FF8F101F" },
-      { nombre: "Horas deducidas", titulo: `REPORTE DE HORAS DEDUCIDAS DEL ${desde} AL ${hasta}.`, filas: filasDeducidas, colorPestana: "FFB71C1C" }
+      { nombre: "Reporte de Acumulado", titulo: `REPORTE DE CONTROL DE HORAS DEL ${desde} AL ${hasta}.`, filas: filasBanco, colorPestana: "FF8F101F" },
+      { nombre: "Reporte de horas deducidos", titulo: `REPORTE DE HORAS DEDUCIDAS DEL ${desde} AL ${hasta}.`, filas: filasDeducidas, colorPestana: "FFB71C1C" }
     ], nombreArchivo);
   } finally {
     btn.disabled = false;
