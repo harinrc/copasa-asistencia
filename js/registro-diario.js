@@ -400,6 +400,9 @@ function abrirFormRegistro(emp, fecha, reg = null) {
     const horasTardanza = round2((calculo.llegadaTardeHoras || 0) + (calculo.salidaTempranoHoras || 0));
     let horasDeducidasSalario = 0;
     let horasDeducidasVacaciones = 0;
+    if (tipo === "vacaciones") {
+      horasDeducidasVacaciones = horasJornadaEsperada(fecha) || 8;
+    }
     if (tipo === "normal" && !esDiaEspecial(fecha) && horasTardanza > 0) {
       if (coberturaTardanza === "vacaciones") horasDeducidasVacaciones = horasTardanza;
       else if (coberturaTardanza === "salario") horasDeducidasSalario = horasTardanza;

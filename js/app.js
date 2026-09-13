@@ -319,10 +319,14 @@ function renderDeducidas() {
       tr.innerHTML = `
         <td>${escapeHtml(emp ? emp.nombre : r.employeeNombre || "")}</td>
         <td>${r.fecha}</td>
-        <td>${formatoHHMM(r.horasDeducidasVacaciones || 0)}</td>
+        <td>${formatoVacaciones(r.horasDeducidasVacaciones || 0)}</td>
         <td>${escapeHtml(r.observaciones || "")}</td>`;
       tbodyVac.appendChild(tr);
     });
+}
+
+function formatoVacaciones(horas) {
+  return Number(horas) >= 8 ? formatoDiasHoras(horas) : formatoHHMM(horas);
 }
 
 // ---------------- Exportar a Excel ----------------
