@@ -2,8 +2,9 @@
 // zoom suave (efecto "Ken Burns"). Para agregar/quitar fotos, solo edita
 // este arreglo — no hace falta tocar el HTML ni el CSS.
 const IMAGENES = [
-  "img/banner-1.jpg"
-  // Agrega más fotos aquí cuando quieras, ej: "img/banner-2.jpg", "img/banner-3.jpg"
+  "img/banner-1.jpg",
+  "img/banner-2.webp"
+  // Agrega más fotos aquí cuando quieras (jpg, png o webp funcionan igual)
 ];
 
 const DURACION_MS = 7000; // cuánto dura cada foto en pantalla
