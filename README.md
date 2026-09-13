@@ -42,11 +42,17 @@ a Excel para enviar el reporte a Recursos Humanos.
   descuentan nada; solo se guarda la hora de entrada/salida como referencia.
 - **Reporte de acumulado (banco de horas)**: saldo inicial + ganado − gastado
   = saldo final por empleado, convertido a días disponibles, y días ya
-  gozados con cargo al banco.
-- **Reporte de horas deducidas**: detalle de los días en que se gastaron
-  horas del banco.
-- **Exportar a Excel** (.xlsx) con 3 hojas: Detalle, Banco de horas y Horas
-  deducidas — lista para enviar a Recursos Humanos.
+  gozados con cargo al banco. Vista día por día en su propia página
+  (`reporte-acumulado.html`).
+- **Reporte de horas deducidas**: detalle día por día de cuándo se gastaron
+  horas del banco, en su propia página (`reporte-deducidas.html`).
+- **Vacaciones anuales** (`vacaciones.html`): control por año de las
+  vacaciones obligatorias de cada empleado. Estado calculado automáticamente
+  a partir de las fechas: `Pendiente` (por defecto) → `En solicitud` →
+  `Aprobado` → `En vacaciones` (mientras dura) → `Ya estuvo de vacaciones`
+  (al terminar). Cada año usa su propio registro, así que el periodo
+  siguiente siempre empieza en `Pendiente` para todos sin arrastrar nada.
+- **Exportar a Excel** en cada reporte, lista para enviar a Recursos Humanos.
 - **Roles**: el primer usuario que se registra queda como `admin` (edita
   todo). Los siguientes quedan como `empleado` (solo lectura).
 - **Tiempo real**: todos los usuarios conectados ven los cambios sin recargar

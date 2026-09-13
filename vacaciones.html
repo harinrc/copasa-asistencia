@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vacaciones · Control de Asistencia COPASA</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-brand">
+      <h1>COPASA · Bodega</h1>
+      <span>Control de Asistencia y Banco de Horas</span>
+    </div>
+    <nav class="topbar-nav">
+      <a href="dashboard.html">Registro diario</a>
+      <a href="reporte-acumulado.html">Acumuladas</a>
+      <a href="reporte-deducidas.html">Deducidas</a>
+      <a href="vacaciones.html" class="active">Vacaciones</a>
+    </nav>
+    <div class="topbar-user">
+      <span id="user-email"></span>
+      <span id="user-role" class="badge"></span>
+      <button id="logout-btn">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="card-header">
+        <h2>Vacaciones anuales</h2>
+        <div class="fecha-nav">
+          <label for="anio">Periodo</label>
+          <select id="anio"></select>
+        </div>
+      </div>
+      <p class="auth-hint" style="text-align:left;margin:0.5rem 0 0;">
+        Cada colaborador inicia el año en <strong>Pendiente</strong>. Al
+        registrar sus fechas aprobadas, el estado cambia automáticamente
+        solo: <strong>Aprobado</strong> (próximo) → <strong>En
+        vacaciones</strong> (mientras dura) → <strong>Ya estuvo de
+        vacaciones</strong> (cuando termina). El periodo siguiente reinicia
+        solo, no arrastra pendientes de años anteriores.
+      </p>
+    </section>
+
+    <section class="card">
+      <table class="data-table" id="tabla-vacaciones">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Cargo</th>
+            <th>Estado</th>
+            <th>Fecha aprobación</th>
+            <th>Días</th>
+            <th>Desde</th>
+            <th>Hasta</th>
+            <th>Observaciones</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- Modal genérico -->
+  <div id="modal-overlay" class="modal-overlay" hidden>
+    <div class="modal">
+      <h3 id="modal-title"></h3>
+      <div id="modal-body"></div>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn-secondary">Cancelar</button>
+        <button id="modal-confirm" class="btn-primary">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/vacaciones.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reporte de horas acumuladas · Control de Asistencia COPASA</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-brand">
+      <h1>COPASA · Bodega</h1>
+      <span>Control de Asistencia y Banco de Horas</span>
+    </div>
+    <nav class="topbar-nav">
+      <a href="dashboard.html">Registro diario</a>
+      <a href="reporte-acumulado.html" class="active">Acumuladas</a>
+      <a href="reporte-deducidas.html">Deducidas</a>
+      <a href="vacaciones.html">Vacaciones</a>
+    </nav>
+    <div class="topbar-user">
+      <span id="user-email"></span>
+      <span id="user-role" class="badge"></span>
+      <button id="logout-btn">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Periodo a detallar</h2>
+      <div class="filters">
+        <div>
+          <label for="fecha-inicio">Desde</label>
+          <input type="date" id="fecha-inicio" />
+        </div>
+        <div>
+          <label for="fecha-fin">Hasta</label>
+          <input type="date" id="fecha-fin" />
+        </div>
+        <button id="btn-exportar" class="btn-secondary">Exportar a Excel</button>
+      </div>
+      <p class="auth-hint" style="text-align:left;margin:0.75rem 0 0;">
+        Elige un rango corto (ej. una quincena) para que la tabla no se
+        vuelva demasiado ancha con ~60 colaboradores.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Reporte de horas acumuladas (día por día)</h2>
+      <p class="auth-hint" style="text-align:left;margin:0;">
+        Cada columna es un día del periodo. El valor es lo que ese
+        colaborador sumó a su banco de horas ese día. "SUB" = subsidio,
+        "FALTA/PERM/VAC" = novedad, "—" = sin registro.
+      </p>
+      <div class="grid-scroll">
+        <table class="grid-table" id="grid-acumulado">
+          <thead><tr></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script type="module" src="js/firebase-config.js"></script>
+  <script type="module" src="js/reporte-acumulado.js"></script>
+</body>
+</html>

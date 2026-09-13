@@ -55,5 +55,11 @@ service cloud.firestore {
       allow read: if estaAutenticado();
       allow write: if esAdmin();
     }
+
+    // Vacaciones anuales por empleado: todos leen; solo admin escribe
+    match /vacaciones/{vacacionId} {
+      allow read: if estaAutenticado();
+      allow write: if esAdmin();
+    }
   }
 }

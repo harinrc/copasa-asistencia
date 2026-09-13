@@ -239,6 +239,21 @@ body {
 .grid-table td.celda-especial { color: #6b7280; font-style: italic; }
 .grid-table td.resumen { background: #f9fafb; font-weight: 600; }
 
+/* ---------- Estados de vacaciones ---------- */
+.estado-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.estado-pendiente { background: #e5e7eb; color: #374151; }
+.estado-en_solicitud { background: #fef3c7; color: #92400e; }
+.estado-aprobado { background: #dbeafe; color: #1e40af; }
+.estado-en_vacaciones { background: #d1fae5; color: #065f46; }
+.estado-disfrutada { background: #ede9fe; color: #5b21b6; }
+
 .icon-btn {
   border: none;
   background: none;

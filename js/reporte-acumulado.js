@@ -1,5 +1,4 @@
-// Reportes detallados día por día (equivalente a las pestañas "Reporte de
-// Acumulado" y "Reporte de horas deducidos" del Excel original).
+// Reporte de horas acumuladas día por día (pestaña "Reporte de Acumulado" del Excel).
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
@@ -26,16 +25,16 @@ document.getElementById("logout-btn").addEventListener("click", () => signOut(au
 function iniciarListeners() {
   onSnapshot(query(collection(db, "empleados"), orderBy("nombre")), (snap) => {
     empleados = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(e => e.activo !== false);
-    renderGrids();
+    renderGrid();
   });
   onSnapshot(query(collection(db, "registros"), orderBy("fecha", "desc")), (snap) => {
     registros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderGrids();
+    renderGrid();
   });
 }
 
-document.getElementById("fecha-inicio").addEventListener("change", renderGrids);
-document.getElementById("fecha-fin").addEventListener("change", renderGrids);
+document.getElementById("fecha-inicio").addEventListener("change", renderGrid);
+document.getElementById("fecha-fin").addEventListener("change", renderGrid);
 
 function getRangoFechas() {
   return {
@@ -78,11 +77,6 @@ function celdaAcumulado(reg) {
   }
 }
 
-function celdaDeducida(reg) {
-  if (!reg || !(reg.horasDeducidasBanco > 0)) return { texto: "—", clase: "celda-vacia" };
-  return { texto: formatoHHMM(reg.horasDeducidasBanco), clase: "celda-deduccion" };
-}
-
 function calcularBancoEmpleado(emp, hasta) {
   const relevantes = registros.filter(r =>
     r.employeeId === emp.id &&
@@ -94,45 +88,35 @@ function calcularBancoEmpleado(emp, hasta) {
   return round2((emp.saldoInicialHoras || 0) + ganado - gastado);
 }
 
-function renderGrids() {
+function renderGrid() {
   const { desde, hasta } = getRangoFechas();
   if (!desde || !hasta) return;
   const fechas = listarFechas(desde, hasta);
-  renderGrid("grid-acumulado", fechas, celdaAcumulado, true);
-  renderGrid("grid-deducidas", fechas, celdaDeducida, false);
-}
 
-function renderGrid(tablaId, fechas, celdaFn, conResumen) {
-  const tabla = document.getElementById(tablaId);
+  const tabla = document.getElementById("grid-acumulado");
   const thead = tabla.querySelector("thead tr");
   const tbody = tabla.querySelector("tbody");
-
-  const columnasResumen = conResumen
-    ? ["Saldo inicial", "Ganado periodo", "Gastado periodo", "Saldo final", "Días disp."]
-    : [];
+  const columnasResumen = ["Saldo inicial", "Ganado periodo", "Gastado periodo", "Saldo final", "Días disp."];
 
   thead.innerHTML = `<th>Empleado</th>${columnasResumen.map(c => `<th>${c}</th>`).join("")}${fechas.map(f => `<th>${etiquetaFecha(f)}</th>`).join("")}`;
 
   tbody.innerHTML = "";
   empleados.forEach(emp => {
     const propios = registros.filter(r => r.employeeId === emp.id);
-    let resumenHtml = "";
-    if (conResumen) {
-      const hasta = fechas[fechas.length - 1];
-      const enPeriodo = propios.filter(r => r.fecha >= fechas[0] && r.fecha <= hasta);
-      const ganadoPeriodo = round2(enPeriodo.reduce((a, r) => a + gananciaBanco(r), 0));
-      const gastadoPeriodo = round2(enPeriodo.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
-      const saldoFinal = calcularBancoEmpleado(emp, hasta);
-      resumenHtml = `
-        <td class="resumen">${formatoHHMM(emp.saldoInicialHoras || 0)}</td>
-        <td class="resumen">${formatoHHMM(ganadoPeriodo)}</td>
-        <td class="resumen">${formatoHHMM(gastadoPeriodo)}</td>
-        <td class="resumen">${formatoHHMM(saldoFinal)}</td>
-        <td class="resumen">${formatoDiasHoras(saldoFinal)}</td>`;
-    }
+    const enPeriodo = propios.filter(r => r.fecha >= fechas[0] && r.fecha <= fechas[fechas.length - 1]);
+    const ganadoPeriodo = round2(enPeriodo.reduce((a, r) => a + gananciaBanco(r), 0));
+    const gastadoPeriodo = round2(enPeriodo.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
+    const saldoFinal = calcularBancoEmpleado(emp, fechas[fechas.length - 1]);
+    const resumenHtml = `
+      <td class="resumen">${formatoHHMM(emp.saldoInicialHoras || 0)}</td>
+      <td class="resumen">${formatoHHMM(ganadoPeriodo)}</td>
+      <td class="resumen">${formatoHHMM(gastadoPeriodo)}</td>
+      <td class="resumen">${formatoHHMM(saldoFinal)}</td>
+      <td class="resumen">${formatoDiasHoras(saldoFinal)}</td>`;
+
     const celdas = fechas.map(f => {
       const reg = propios.find(r => r.fecha === f);
-      const { texto, clase } = celdaFn(reg);
+      const { texto, clase } = celdaAcumulado(reg);
       return `<td class="${clase}">${texto}</td>`;
     }).join("");
 
@@ -142,37 +126,35 @@ function renderGrid(tablaId, fechas, celdaFn, conResumen) {
   });
 }
 
-// ---------------- Exportar a Excel (mismas 2 cuadrículas) ----------------
+// ---------------- Exportar a Excel ----------------
 document.getElementById("btn-exportar").addEventListener("click", () => {
   const { desde, hasta } = getRangoFechas();
   if (!desde || !hasta) return alert("Elige un rango de fechas primero.");
   const fechas = listarFechas(desde, hasta);
 
-  function construirFilas(celdaFn, conResumen) {
-    return empleados.map(emp => {
-      const propios = registros.filter(r => r.employeeId === emp.id);
-      const fila = { "Empleado": emp.nombre, "Cargo": emp.cargo || "" };
-      if (conResumen) {
-        const enPeriodo = propios.filter(r => r.fecha >= desde && r.fecha <= hasta);
-        fila["Saldo inicial"] = formatoHHMM(emp.saldoInicialHoras || 0);
-        fila["Ganado periodo"] = formatoHHMM(round2(enPeriodo.reduce((a, r) => a + gananciaBanco(r), 0)));
-        fila["Gastado periodo"] = formatoHHMM(round2(enPeriodo.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0)));
-        const saldoFinal = calcularBancoEmpleado(emp, hasta);
-        fila["Saldo final"] = formatoHHMM(saldoFinal);
-        fila["Días disponibles"] = formatoDiasHoras(saldoFinal);
-      }
-      fechas.forEach(f => {
-        const reg = propios.find(r => r.fecha === f);
-        fila[etiquetaFecha(f)] = celdaFn(reg).texto;
-      });
-      return fila;
+  const filas = empleados.map(emp => {
+    const propios = registros.filter(r => r.employeeId === emp.id);
+    const enPeriodo = propios.filter(r => r.fecha >= desde && r.fecha <= hasta);
+    const saldoFinal = calcularBancoEmpleado(emp, hasta);
+    const fila = {
+      "Empleado": emp.nombre,
+      "Cargo": emp.cargo || "",
+      "Saldo inicial": formatoHHMM(emp.saldoInicialHoras || 0),
+      "Ganado periodo": formatoHHMM(round2(enPeriodo.reduce((a, r) => a + gananciaBanco(r), 0))),
+      "Gastado periodo": formatoHHMM(round2(enPeriodo.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0))),
+      "Saldo final": formatoHHMM(saldoFinal),
+      "Días disponibles": formatoDiasHoras(saldoFinal)
+    };
+    fechas.forEach(f => {
+      const reg = propios.find(r => r.fecha === f);
+      fila[etiquetaFecha(f)] = celdaAcumulado(reg).texto;
     });
-  }
+    return fila;
+  });
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(construirFilas(celdaAcumulado, true)), "Acumulado por día");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(construirFilas(celdaDeducida, false)), "Deducidas por día");
-  XLSX.writeFile(wb, `Detalle_Banco_Horas_${desde}_a_${hasta}.xlsx`);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filas), "Acumulado por día");
+  XLSX.writeFile(wb, `Reporte_Acumulado_${desde}_a_${hasta}.xlsx`);
 });
 
 function escapeHtml(str) {
