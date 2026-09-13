@@ -4,12 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Iniciar sesión · Control de Asistencia COPASA</title>
+<link rel="icon" href="img/logo.png" />
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body class="auth-body">
+  <div class="auth-slideshow" id="slideshow"></div>
+  <div class="auth-overlay"></div>
+
   <div class="auth-card">
     <div class="auth-logo">
-      <h1>COPASA</h1>
+      <img src="img/logo.png" alt="COPASA" class="auth-logo-img" />
       <p>Control de Asistencia · Bodega</p>
     </div>
 
@@ -31,5 +35,6 @@
   <!-- Firebase SDKs (versión modular vía CDN) -->
   <script type="module" src="js/firebase-config.js"></script>
   <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/login-slideshow.js"></script>
 </body>
 </html>

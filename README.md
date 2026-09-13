@@ -5,6 +5,25 @@ real (Firestore): si dos personas lo abren al mismo tiempo, ambas ven los
 mismos datos actualizados al instante. Incluye inicio de sesión, y exportación
 a Excel para enviar el reporte a Recursos Humanos.
 
+## Imágenes de marca (logo y fondo del login)
+
+El sistema espera estas imágenes en una carpeta `img/` en la raíz del
+proyecto (créala si no existe):
+
+- `img/logo.png` — el logo redondo de COPASA. Se usa en el login y en la
+  barra superior de todas las páginas.
+- `img/banner-1.jpg` — la foto de electrodomésticos (o la que quieras) que
+  aparece de fondo en el login con un efecto de zoom suave.
+
+Para agregar más fotos al fondo del login (se van alternando al azar con un
+fundido suave), guarda los archivos como `img/banner-2.jpg`,
+`img/banner-3.jpg`, etc. y agrégalos al arreglo `IMAGENES` en
+[js/login-slideshow.js](js/login-slideshow.js). No hace falta tocar el HTML.
+
+Los colores (rojo COPASA) están centralizados en las variables `--primary` y
+`--primary-dark` al inicio de [css/styles.css](css/styles.css) — cámbialos
+ahí si el rojo exacto de tu marca es distinto.
+
 ## Estructura de páginas
 
 Cada sección vive en su propia página (más fácil de usar y más liviano con
