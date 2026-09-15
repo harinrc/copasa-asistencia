@@ -6,7 +6,7 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc,
   getDocs, onSnapshot, query, orderBy, where, writeBatch, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { formatoHHMM, parseHHMM, formatoDiasHoras, fechaLocalHoy, formatoHora12, ordenarEmpleados } from "./formato.js";
+import { formatoHHMM, parseHHMM, formatoDiasHoras, fechaLocalHoy, formatoHora12, ordenarEmpleados, coincideBusqueda } from "./formato.js";
 import { exportarExcelBonito } from "./excel-export.js";
 
 let currentUser = null;
@@ -81,6 +81,7 @@ async function ensureUserProfile(user) {
 function iniciarListeners() {
   onSnapshot(collection(db, "empleados"), (snap) => {
     empleados = ordenarEmpleados(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    actualizarSugerenciasCargo();
     renderEmpleados();
     renderBanco();
   });
@@ -129,10 +130,20 @@ function listarFechas(desde, hasta) {
 }
 
 // ---------------- Render: Empleados ----------------
+function actualizarSugerenciasCargo() {
+  const datalist = document.getElementById("cargos-sugeridos");
+  if (!datalist) return;
+  const cargosUnicos = [...new Set(empleados.map(e => e.cargo).filter(Boolean))];
+  datalist.innerHTML = cargosUnicos.map(c => `<option value="${escapeHtml(c)}"></option>`).join("");
+}
+
 function renderEmpleados() {
   const tbody = document.querySelector("#tabla-empleados tbody");
   tbody.innerHTML = "";
-  empleados.forEach(emp => {
+  const busqueda = document.getElementById("buscar-empleados")?.value || "";
+  empleados
+    .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
+    .forEach(emp => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${escapeHtml(emp.nombre)}</td>
@@ -147,6 +158,7 @@ function renderEmpleados() {
   });
   document.querySelectorAll("#tabla-empleados .admin-only").forEach(el => el.style.display = isAdmin ? "" : "none");
 }
+document.getElementById("buscar-empleados").addEventListener("input", renderEmpleados);
 
 // ---------------- Modal genérico ----------------
 const overlay = document.getElementById("modal-overlay");
@@ -269,7 +281,7 @@ document.addEventListener("click", async (e) => {
 function abrirFormEmpleado(emp = null) {
   const html = `
     ${campo("f-nombre", "Nombre completo", "text", emp?.nombre || "")}
-    ${campo("f-cargo", "Cargo", "text", emp?.cargo || "")}
+    ${campo("f-cargo", "Cargo", "text", emp?.cargo || "", 'list="cargos-sugeridos" placeholder="Ej. Conductor"')}
     ${campo("f-saldo-inicial", "Saldo inicial de control de horas HH:MM (migración del Excel)", "text", formatoHHMM(emp?.saldoInicialHoras ?? 0), 'placeholder="00:00" pattern="-?[0-9]+:[0-9]{2}"')}
     ${campo("f-saldo-fecha", "Fecha del saldo inicial", "date", emp?.saldoInicialFecha || fechaLocalHoy())}
   `;
@@ -327,8 +339,11 @@ function renderBanco() {
   tbody.innerHTML = "";
   const { desde, hasta } = getRangoFechas();
   const enPeriodo = registrosFiltrados(desde, hasta);
+  const busqueda = document.getElementById("buscar-banco")?.value || "";
 
-  empleados.forEach(emp => {
+  empleados
+    .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
+    .forEach(emp => {
     const propios = enPeriodo.filter(r => r.employeeId === emp.id);
     const ganadoPeriodo = round2(propios.reduce((a, r) => a + gananciaBanco(r), 0));
     const gastadoPeriodo = round2(propios.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
@@ -338,6 +353,7 @@ function renderBanco() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${escapeHtml(emp.nombre)}</td>
+      <td>${escapeHtml(emp.cargo || "")}</td>
       <td>${formatoHHMM(emp.saldoInicialHoras || 0)}</td>
       <td>${formatoHHMM(ganadoPeriodo)}</td>
       <td>${formatoHHMM(gastadoPeriodo)}</td>
@@ -347,19 +363,25 @@ function renderBanco() {
     tbody.appendChild(tr);
   });
 }
+document.getElementById("buscar-banco").addEventListener("input", renderBanco);
 
 // ---------------- Render: Horas deducidas ----------------
 function renderDeducidas() {
   const tbody = document.querySelector("#tabla-deducidas tbody");
   tbody.innerHTML = "";
   const { desde, hasta } = getRangoFechas();
+  const busquedaDeducidas = document.getElementById("buscar-deducidas")?.value || "";
   registrosFiltrados(desde, hasta)
     .filter(r => (r.horasDeducidasBanco || 0) > 0)
     .forEach(r => {
       const emp = empleados.find(e => e.id === r.employeeId);
+      const nombre = emp ? emp.nombre : r.employeeNombre || "";
+      const cargo = emp?.cargo || "";
+      if (!coincideBusqueda(nombre, busquedaDeducidas) && !coincideBusqueda(cargo, busquedaDeducidas)) return;
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${escapeHtml(emp ? emp.nombre : r.employeeNombre || "")}</td>
+        <td>${escapeHtml(nombre)}</td>
+        <td>${escapeHtml(cargo)}</td>
         <td>${r.fecha}</td>
         <td>${formatoHHMM(r.horasDeducidasBanco || 0)}</td>
         <td>${escapeHtml(r.observaciones || "")}</td>`;
@@ -368,19 +390,26 @@ function renderDeducidas() {
 
   const tbodyVac = document.querySelector("#tabla-vacaciones-horas tbody");
   tbodyVac.innerHTML = "";
+  const busquedaVacaciones = document.getElementById("buscar-vacaciones-horas")?.value || "";
   registrosFiltrados(desde, hasta)
     .filter(r => (r.horasDeducidasVacaciones || 0) > 0)
     .forEach(r => {
       const emp = empleados.find(e => e.id === r.employeeId);
+      const nombre = emp ? emp.nombre : r.employeeNombre || "";
+      const cargo = emp?.cargo || "";
+      if (!coincideBusqueda(nombre, busquedaVacaciones) && !coincideBusqueda(cargo, busquedaVacaciones)) return;
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${escapeHtml(emp ? emp.nombre : r.employeeNombre || "")}</td>
+        <td>${escapeHtml(nombre)}</td>
+        <td>${escapeHtml(cargo)}</td>
         <td>${r.fecha}</td>
         <td>${formatoVacaciones(r.horasDeducidasVacaciones || 0)}</td>
         <td>${escapeHtml(r.observaciones || "")}</td>`;
       tbodyVac.appendChild(tr);
     });
 }
+document.getElementById("buscar-deducidas").addEventListener("input", renderDeducidas);
+document.getElementById("buscar-vacaciones-horas").addEventListener("input", renderDeducidas);
 
 function formatoVacaciones(horas) {
   return Number(horas) >= 8 ? formatoDiasHoras(horas) : formatoHHMM(horas);

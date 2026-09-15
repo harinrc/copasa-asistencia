@@ -4,7 +4,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import {
   collection, onSnapshot, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { formatoHHMM, formatoDiasHoras, ordenarEmpleados } from "./formato.js";
+import { formatoHHMM, formatoDiasHoras, ordenarEmpleados, coincideBusqueda } from "./formato.js";
 import { exportarExcelBonito } from "./excel-export.js";
 
 let empleados = [];
@@ -99,10 +99,13 @@ function renderGrid() {
   const tbody = tabla.querySelector("tbody");
   const columnasResumen = ["Saldo inicial", "Ganado periodo", "Gastado periodo", "Saldo final", "Días disp."];
 
-  thead.innerHTML = `<th>Empleado</th>${columnasResumen.map(c => `<th>${c}</th>`).join("")}${fechas.map(f => `<th>${etiquetaFecha(f)}</th>`).join("")}`;
+  thead.innerHTML = `<th>Empleado</th><th>Cargo</th>${columnasResumen.map(c => `<th>${c}</th>`).join("")}${fechas.map(f => `<th>${etiquetaFecha(f)}</th>`).join("")}`;
 
   tbody.innerHTML = "";
-  empleados.forEach(emp => {
+  const busqueda = document.getElementById("buscar-acumulado")?.value || "";
+  empleados
+    .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
+    .forEach(emp => {
     const propios = registros.filter(r => r.employeeId === emp.id);
     const enPeriodo = propios.filter(r => r.fecha >= fechas[0] && r.fecha <= fechas[fechas.length - 1]);
     const ganadoPeriodo = round2(enPeriodo.reduce((a, r) => a + gananciaBanco(r), 0));
@@ -122,10 +125,11 @@ function renderGrid() {
     }).join("");
 
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${escapeHtml(emp.nombre)}</td>${resumenHtml}${celdas}`;
+    tr.innerHTML = `<td>${escapeHtml(emp.nombre)}</td><td>${escapeHtml(emp.cargo || "")}</td>${resumenHtml}${celdas}`;
     tbody.appendChild(tr);
   });
 }
+document.getElementById("buscar-acumulado").addEventListener("input", renderGrid);
 
 // ---------------- Exportar a Excel ----------------
 document.getElementById("btn-exportar").addEventListener("click", async () => {

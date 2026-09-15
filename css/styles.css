@@ -289,6 +289,16 @@ body > #btn-instalar-app {
   border-radius: 6px;
 }
 
+.search-bar { margin: 0.75rem 0; }
+.search-bar label { display: block; font-size: 0.8rem; margin-bottom: 0.25rem; }
+.search-bar input {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
 .btn-primary, .btn-secondary {
   border: none;
   border-radius: 6px;
@@ -458,6 +468,7 @@ body > #btn-instalar-app {
   .card-header { flex-direction: column; align-items: stretch; }
   .card-header > *:last-child { align-self: flex-start; }
   .filters { flex-direction: column; align-items: stretch; }
+  .search-bar input { max-width: 100%; }
   .filters > div { width: 100%; }
   .filters input, .filters select { width: 100%; }
   .btn-primary, .btn-secondary { width: 100%; }

@@ -5,7 +5,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import {
   collection, onSnapshot, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { formatoHHMM, ordenarEmpleados } from "./formato.js";
+import { formatoHHMM, ordenarEmpleados, coincideBusqueda } from "./formato.js";
 import { exportarExcelBonito } from "./excel-export.js";
 
 let empleados = [];
@@ -61,11 +61,16 @@ function filasPeriodo() {
 function render() {
   const tbody = document.querySelector("#tabla-salario tbody");
   tbody.innerHTML = "";
+  const busqueda = document.getElementById("buscar-salario")?.value || "";
   filasPeriodo().forEach(r => {
     const emp = empleados.find(e => e.id === r.employeeId);
+    const nombre = emp ? emp.nombre : r.employeeNombre || "";
+    const cargo = emp?.cargo || "";
+    if (!coincideBusqueda(nombre, busqueda) && !coincideBusqueda(cargo, busqueda)) return;
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${escapeHtml(emp ? emp.nombre : r.employeeNombre || "")}</td>
+      <td>${escapeHtml(nombre)}</td>
+      <td>${escapeHtml(cargo)}</td>
       <td>${r.fecha}</td>
       <td>${motivo(r)}</td>
       <td>${formatoHHMM(r.horasDeducidasSalario || 0)}</td>
@@ -73,6 +78,7 @@ function render() {
     tbody.appendChild(tr);
   });
 }
+document.getElementById("buscar-salario").addEventListener("input", render);
 
 document.getElementById("btn-exportar").addEventListener("click", async () => {
   const btn = document.getElementById("btn-exportar");

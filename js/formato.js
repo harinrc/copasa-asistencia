@@ -73,3 +73,14 @@ export function ordenarEmpleados(empleados) {
     String(a.nombre || "").localeCompare(String(b.nombre || ""), "es")
   );
 }
+
+// Quita acentos y pasa a minúsculas, para comparar textos sin importar tildes/mayúsculas.
+export function normalizarTexto(str) {
+  return String(str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// true si `texto` contiene `consulta` (sin importar tildes/mayúsculas). Consulta vacía = coincide siempre.
+export function coincideBusqueda(texto, consulta) {
+  if (!consulta) return true;
+  return normalizarTexto(texto).includes(normalizarTexto(consulta));
+}

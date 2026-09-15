@@ -75,6 +75,10 @@
           <button id="btn-nuevo-empleado" class="btn-primary admin-only">+ Nuevo empleado</button>
         </div>
       </div>
+      <div class="search-bar">
+        <label for="buscar-empleados">Buscar por nombre o cargo</label>
+        <input type="search" id="buscar-empleados" placeholder="Ej. Juan, Conductor..." />
+      </div>
       <div class="table-scroll">
       <table class="data-table" id="tabla-empleados">
         <thead>
@@ -97,12 +101,17 @@
         <h2>Reporte de acumulado (control de horas)</h2>
         <a href="reporte-acumulado.html" class="btn-secondary" style="text-decoration:none;">Ver detalle día por día →</a>
       </div>
+      <div class="search-bar">
+        <label for="buscar-banco">Buscar por nombre o cargo</label>
+        <input type="search" id="buscar-banco" placeholder="Ej. Juan, Conductor..." />
+      </div>
       <p class="scroll-hint">← Desliza la tabla para ver todas las columnas →</p>
       <div class="table-scroll">
       <table class="data-table" id="tabla-banco">
         <thead>
           <tr>
             <th>Empleado</th>
+            <th>Cargo</th>
             <th>Saldo inicial</th>
             <th>Ganado en periodo</th>
             <th>Gastado en periodo</th>
@@ -119,11 +128,16 @@
     <!-- Reporte de horas deducidas del banco -->
     <section class="card">
       <h2>Reporte de horas deducidas (a cuenta de horas acumuladas)</h2>
+      <div class="search-bar">
+        <label for="buscar-deducidas">Buscar por nombre o cargo</label>
+        <input type="search" id="buscar-deducidas" placeholder="Ej. Juan, Conductor..." />
+      </div>
       <div class="table-scroll">
       <table class="data-table" id="tabla-deducidas">
         <thead>
           <tr>
             <th>Empleado</th>
+            <th>Cargo</th>
             <th>Fecha</th>
             <th>Horas deducidas</th>
             <th>Observaciones</th>
@@ -142,11 +156,16 @@
         sus vacaciones (en vez de descontarlo del salario), queda registrado
         aquí para tenerlo en cuenta.
       </p>
+      <div class="search-bar">
+        <label for="buscar-vacaciones-horas">Buscar por nombre o cargo</label>
+        <input type="search" id="buscar-vacaciones-horas" placeholder="Ej. Juan, Conductor..." />
+      </div>
       <div class="table-scroll">
       <table class="data-table" id="tabla-vacaciones-horas">
         <thead>
           <tr>
             <th>Empleado</th>
+            <th>Cargo</th>
             <th>Fecha</th>
             <th>Horas descontadas</th>
             <th>Observaciones</th>
@@ -157,6 +176,8 @@
       </div>
     </section>
   </main>
+
+  <datalist id="cargos-sugeridos"></datalist>
 
   <!-- Modal genérico -->
   <div id="modal-overlay" class="modal-overlay" hidden>

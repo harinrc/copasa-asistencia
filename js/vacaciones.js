@@ -7,7 +7,7 @@ import {
   collection, doc, deleteDoc, setDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { fechaLocalHoy, ordenarEmpleados } from "./formato.js";
+import { fechaLocalHoy, ordenarEmpleados, coincideBusqueda } from "./formato.js";
 
 let currentUser = null;
 let isAdmin = false;
@@ -78,7 +78,10 @@ function calcularEstado(v) {
 function render() {
   const tbody = document.querySelector("#tabla-vacaciones tbody");
   tbody.innerHTML = "";
-  empleados.forEach(emp => {
+  const busqueda = document.getElementById("buscar-vacaciones")?.value || "";
+  empleados
+    .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
+    .forEach(emp => {
     const v = vacacionesPorAnio.find(x => x.employeeId === emp.id);
     const estado = calcularEstado(v);
     const tr = document.createElement("tr");
@@ -99,6 +102,7 @@ function render() {
   });
   document.querySelectorAll("#tabla-vacaciones .admin-only").forEach(el => el.style.display = isAdmin ? "" : "none");
 }
+document.getElementById("buscar-vacaciones").addEventListener("input", render);
 
 // ---------------- Modal genérico ----------------
 const overlay = document.getElementById("modal-overlay");

@@ -181,7 +181,10 @@ function renderRegistroDiario() {
   const tbody = document.querySelector("#tabla-registro-diario tbody");
   tbody.innerHTML = "";
   const horarioHoy = horarioEsperado(fecha);
-  empleados.forEach(emp => {
+  const busqueda = document.getElementById("buscar-registro")?.value || "";
+  empleados
+    .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
+    .forEach(emp => {
     const regReal = registros.find(r => r.employeeId === emp.id && r.fecha === fecha);
     // Si nadie editó nada y es un día laboral normal, se asume "Normal" con el
     // horario configurado aplicado automáticamente (0 horas de más/de menos).
@@ -214,6 +217,7 @@ function renderRegistroDiario() {
   document.querySelectorAll("#tabla-registro-diario .admin-only").forEach(el => el.style.display = isAdmin ? "" : "none");
   renderTemporadaIndicador();
 }
+document.getElementById("buscar-registro").addEventListener("input", renderRegistroDiario);
 
 // ---------------- Cálculo del día (banco de horas) ----------------
 function toMinutos(hhmm) {

@@ -4,7 +4,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import {
   collection, onSnapshot, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { formatoHHMM, ordenarEmpleados } from "./formato.js";
+import { formatoHHMM, ordenarEmpleados, coincideBusqueda } from "./formato.js";
 import { exportarExcelBonito } from "./excel-export.js";
 
 let empleados = [];
@@ -74,10 +74,13 @@ function renderGrid() {
   const thead = tabla.querySelector("thead tr");
   const tbody = tabla.querySelector("tbody");
 
-  thead.innerHTML = `<th>Empleado</th>${fechas.map(f => `<th>${etiquetaFecha(f)}</th>`).join("")}`;
+  thead.innerHTML = `<th>Empleado</th><th>Cargo</th>${fechas.map(f => `<th>${etiquetaFecha(f)}</th>`).join("")}`;
 
   tbody.innerHTML = "";
-  empleados.forEach(emp => {
+  const busqueda = document.getElementById("buscar-deducidas-grid")?.value || "";
+  empleados
+    .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
+    .forEach(emp => {
     const propios = registros.filter(r => r.employeeId === emp.id);
     const celdas = fechas.map(f => {
       const reg = propios.find(r => r.fecha === f);
@@ -87,10 +90,11 @@ function renderGrid() {
     }).join("");
 
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${escapeHtml(emp.nombre)}</td>${celdas}`;
+    tr.innerHTML = `<td>${escapeHtml(emp.nombre)}</td><td>${escapeHtml(emp.cargo || "")}</td>${celdas}`;
     tbody.appendChild(tr);
   });
 }
+document.getElementById("buscar-deducidas-grid").addEventListener("input", renderGrid);
 
 // ---------------- Exportar a Excel ----------------
 document.getElementById("btn-exportar").addEventListener("click", async () => {
