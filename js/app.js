@@ -17,8 +17,8 @@ let feriados = [];
 let horario = { entrada: "08:00", salida: "17:00", entradaSabado: "08:00", salidaSabado: "12:00" };
 
 const ETIQUETAS_TIPO = {
-  normal: "Normal", subsidio: "Subsidio (INSS)", a_cuenta_acumulado: "A cuenta de acumulado",
-  falta: "Falta", permiso: "Permiso", vacaciones: "Vacaciones"
+  normal: "Normal", subsidio: "Subsidio (INSS)", a_cuenta_acumulado: "A cuenta de horas acumuladas",
+  falta: "A cuenta de salario", permiso: "Permiso autorizado (clínico, emergencia, familiar u otro)", vacaciones: "Vacaciones"
 };
 
 const MESES_LARGOS = [
@@ -403,7 +403,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
     switch (reg.tipo) {
       case "subsidio": return "SUB";
       case "falta": return "FALTA";
-      case "permiso": return "PERM";
+      case "permiso": return "PERMISO AUTORIZADO";
       case "vacaciones": return "VAC";
       case "a_cuenta_acumulado": return `-${formatoHHMM(reg.horasDeducidasBanco || 0)}`;
       default: {

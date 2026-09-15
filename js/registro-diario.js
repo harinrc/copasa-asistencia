@@ -18,8 +18,8 @@ let feriados = [];
 let horario = { entrada: "08:00", salida: "17:00", entradaSabado: "08:00", salidaSabado: "12:00" };
 
 const ETIQUETAS_TIPO = {
-  normal: "Normal", subsidio: "Subsidio (INSS)", a_cuenta_acumulado: "A cuenta de acumulado",
-  falta: "Falta", permiso: "Permiso", vacaciones: "Vacaciones"
+  normal: "Normal", subsidio: "Subsidio (INSS)", a_cuenta_acumulado: "A cuenta de horas acumuladas",
+  falta: "A cuenta de salario", permiso: "Permiso autorizado (clínico, emergencia, familiar u otro)", vacaciones: "Vacaciones"
 };
 
 // ---------------- Auth guard ----------------
@@ -336,9 +336,9 @@ function abrirFormRegistro(emp, fecha, reg = null) {
       <select id="f-tipo">
         <option value="normal" ${tipoActual === "normal" ? "selected" : ""}>Normal (marca entrada/salida)</option>
         <option value="subsidio" ${tipoActual === "subsidio" ? "selected" : ""}>Subsidio (INSS, no descuenta nada)</option>
-        <option value="a_cuenta_acumulado" ${tipoActual === "a_cuenta_acumulado" ? "selected" : ""}>A cuenta de acumulado / permiso autorizado</option>
-        <option value="falta" ${tipoActual === "falta" ? "selected" : ""}>Falta (sin aviso ni constancia)</option>
-        <option value="permiso" ${tipoActual === "permiso" ? "selected" : ""}>Permiso</option>
+        <option value="a_cuenta_acumulado" ${tipoActual === "a_cuenta_acumulado" ? "selected" : ""}>A cuenta de horas acumuladas</option>
+        <option value="falta" ${tipoActual === "falta" ? "selected" : ""}>A cuenta de salario</option>
+        <option value="permiso" ${tipoActual === "permiso" ? "selected" : ""}>Permiso autorizado (clínico, emergencia, familiar u otro)</option>
         <option value="vacaciones" ${tipoActual === "vacaciones" ? "selected" : ""}>Vacaciones</option>
       </select>
     </div>

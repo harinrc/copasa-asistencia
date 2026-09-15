@@ -68,7 +68,7 @@ function celdaAcumulado(reg) {
   switch (reg.tipo) {
     case "subsidio": return { texto: "SUB", clase: "celda-especial" };
     case "falta": return { texto: "FALTA", clase: "celda-especial" };
-    case "permiso": return { texto: "PERM", clase: "celda-especial" };
+    case "permiso": return { texto: "PERMISO AUTORIZADO", clase: "celda-especial" };
     case "vacaciones": return { texto: "VAC", clase: "celda-especial" };
     case "a_cuenta_acumulado": return { texto: `-${formatoHHMM(reg.horasDeducidasBanco || 0)}`, clase: "celda-deduccion" };
     default: {
