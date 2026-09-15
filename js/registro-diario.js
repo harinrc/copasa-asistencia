@@ -7,7 +7,7 @@ import {
   collection, doc, deleteDoc, setDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { formatoHHMM, parseHHMM, fechaLocalHoy } from "./formato.js";
+import { formatoHHMM, parseHHMM, fechaLocalHoy, ordenarEmpleados } from "./formato.js";
 
 let currentUser = null;
 let isAdmin = false;
@@ -40,8 +40,8 @@ document.getElementById("logout-btn").addEventListener("click", () => signOut(au
 
 // ---------------- Listeners en tiempo real ----------------
 function iniciarListeners() {
-  onSnapshot(query(collection(db, "empleados"), orderBy("nombre")), (snap) => {
-    empleados = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(e => e.activo !== false);
+  onSnapshot(collection(db, "empleados"), (snap) => {
+    empleados = ordenarEmpleados(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(e => e.activo !== false));
     renderRegistroDiario();
   });
 

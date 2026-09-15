@@ -6,7 +6,7 @@ import {
   collection, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc,
   getDocs, onSnapshot, query, orderBy, where, writeBatch, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { formatoHHMM, parseHHMM, formatoDiasHoras, fechaLocalHoy, formatoHora12 } from "./formato.js";
+import { formatoHHMM, parseHHMM, formatoDiasHoras, fechaLocalHoy, formatoHora12, ordenarEmpleados } from "./formato.js";
 import { exportarExcelBonito } from "./excel-export.js";
 
 let currentUser = null;
@@ -79,8 +79,8 @@ async function ensureUserProfile(user) {
 
 // ---------------- Listeners en tiempo real ----------------
 function iniciarListeners() {
-  onSnapshot(query(collection(db, "empleados"), orderBy("nombre")), (snap) => {
-    empleados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  onSnapshot(collection(db, "empleados"), (snap) => {
+    empleados = ordenarEmpleados(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     renderEmpleados();
     renderBanco();
   });
@@ -279,7 +279,8 @@ function abrirFormEmpleado(emp = null) {
       cargo: document.getElementById("f-cargo").value.trim(),
       saldoInicialHoras: parseHHMM(document.getElementById("f-saldo-inicial").value),
       saldoInicialFecha: document.getElementById("f-saldo-fecha").value,
-      activo: true
+      activo: true,
+      ...(emp ? { creadoEn: emp.creadoEn || serverTimestamp() } : { creadoEn: serverTimestamp() })
     };
     if (!data.nombre) return alert("El nombre es obligatorio.");
     if (emp) await updateDoc(doc(db, "empleados", emp.id), data);

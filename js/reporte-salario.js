@@ -5,7 +5,7 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import {
   collection, onSnapshot, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { formatoHHMM } from "./formato.js";
+import { formatoHHMM, ordenarEmpleados } from "./formato.js";
 import { exportarExcelBonito } from "./excel-export.js";
 
 let empleados = [];
@@ -23,8 +23,8 @@ onAuthStateChanged(auth, (user) => {
 document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
 
 function iniciarListeners() {
-  onSnapshot(query(collection(db, "empleados"), orderBy("nombre")), (snap) => {
-    empleados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  onSnapshot(collection(db, "empleados"), (snap) => {
+    empleados = ordenarEmpleados(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     render();
   });
   onSnapshot(query(collection(db, "registros"), orderBy("fecha", "desc")), (snap) => {

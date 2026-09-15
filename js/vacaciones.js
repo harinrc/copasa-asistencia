@@ -7,7 +7,7 @@ import {
   collection, doc, deleteDoc, setDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { fechaLocalHoy } from "./formato.js";
+import { fechaLocalHoy, ordenarEmpleados } from "./formato.js";
 
 let currentUser = null;
 let isAdmin = false;
@@ -43,8 +43,8 @@ function iniciarSelectorAnio() {
 let unsubscribeVacaciones = null;
 
 function iniciarListeners() {
-  onSnapshot(query(collection(db, "empleados"), orderBy("nombre")), (snap) => {
-    empleados = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(e => e.activo !== false);
+  onSnapshot(collection(db, "empleados"), (snap) => {
+    empleados = ordenarEmpleados(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(e => e.activo !== false));
     render();
   });
   cargarVacacionesDelAnio();

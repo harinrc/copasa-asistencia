@@ -51,3 +51,25 @@ export function formatoDiasHoras(decimalHoras, horasPorDia = 8) {
   const signo = negativo ? "-" : "";
   return `${signo}${dias} día${dias === 1 ? "" : "s"} y ${horasRestantes} hora${horasRestantes === 1 ? "" : "s"}`;
 }
+
+export function ordenarEmpleados(empleados) {
+  const categoria = (cargo) => {
+    const texto = String(cargo || "").toLowerCase();
+    if (texto.includes("supervisor")) return 0;
+    if (texto.includes("admin") && texto.includes("bodega")) return 1;
+    if (texto.includes("conductor")) return 2;
+    if (texto.includes("ayudante")) return 3;
+    return 4;
+  };
+  const antiguedad = (empleado) => {
+    const creado = empleado.creadoEn;
+    if (creado?.toMillis) return creado.toMillis();
+    if (creado instanceof Date) return creado.getTime();
+    return Number.MAX_SAFE_INTEGER;
+  };
+  return [...empleados].sort((a, b) =>
+    categoria(a.cargo) - categoria(b.cargo) ||
+    antiguedad(a) - antiguedad(b) ||
+    String(a.nombre || "").localeCompare(String(b.nombre || ""), "es")
+  );
+}
