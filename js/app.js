@@ -211,6 +211,42 @@ async function borrarRegistrosEmpleado(employeeId) {
   }
 }
 
+async function limpiarRegistrosHuerfanos() {
+  const idsEmpleados = new Set(empleados.map((empleado) => empleado.id));
+  const [registrosSnap, vacacionesSnap] = await Promise.all([
+    getDocs(collection(db, "registros")),
+    getDocs(collection(db, "vacaciones"))
+  ]);
+  const huerfanos = [
+    ...registrosSnap.docs.filter((registro) => !idsEmpleados.has(registro.data().employeeId)),
+    ...vacacionesSnap.docs.filter((registro) => !idsEmpleados.has(registro.data().employeeId))
+  ];
+  if (!huerfanos.length) {
+    alert("No se encontraron registros huérfanos.");
+    return;
+  }
+  if (!confirm(`Se encontraron ${huerfanos.length} registros huérfanos. ¿Deseas eliminarlos? Esta acción no se puede deshacer.`)) return;
+  for (let inicio = 0; inicio < huerfanos.length; inicio += 450) {
+    const lote = writeBatch(db);
+    huerfanos.slice(inicio, inicio + 450).forEach((registro) => lote.delete(registro.ref));
+    await lote.commit();
+  }
+  alert(`Se eliminaron ${huerfanos.length} registros huérfanos.`);
+}
+
+document.getElementById("btn-limpiar-huerfanos").addEventListener("click", async () => {
+  const btn = document.getElementById("btn-limpiar-huerfanos");
+  btn.disabled = true;
+  try {
+    await limpiarRegistrosHuerfanos();
+  } catch (error) {
+    console.error(error);
+    alert("No se pudieron limpiar los registros: " + (error?.message || error));
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 document.addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
