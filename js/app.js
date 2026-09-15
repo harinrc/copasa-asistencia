@@ -219,8 +219,12 @@ document.addEventListener("click", async (e) => {
   if (btn.dataset.action === "edit-empleado") abrirFormEmpleado(empleados.find(x => x.id === id));
   if (btn.dataset.action === "delete-empleado") {
     const emp = empleados.find(x => x.id === id);
-    if (confirm(`¿Eliminar completamente a "${emp?.nombre}"? Se borrará su ficha, registros diarios y vacaciones asociadas. Esta acción no se puede deshacer.`)) {
-      await borrarRegistrosEmpleado(id);
+    if (confirm(`¿Eliminar a "${emp?.nombre}"?`)) {
+      const borrarHistorial = confirm(
+        `¿También deseas borrar todos los registros diarios y vacaciones de "${emp?.nombre}"?\n\n` +
+        "Aceptar = borrar ficha e historial.\nCancelar = conservar el historial."
+      );
+      if (borrarHistorial) await borrarRegistrosEmpleado(id);
       await deleteDoc(doc(db, "empleados", id));
     }
   }
