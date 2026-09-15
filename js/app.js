@@ -4,7 +4,7 @@ import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection, doc, addDoc, updateDoc, deleteDoc, setDoc, getDoc,
-  onSnapshot, query, orderBy, serverTimestamp
+  getDocs, onSnapshot, query, orderBy, where, writeBatch, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { formatoHHMM, parseHHMM, formatoDiasHoras, fechaLocalHoy, formatoHora12 } from "./formato.js";
 import { exportarExcelBonito } from "./excel-export.js";
@@ -196,6 +196,21 @@ function campo(id, label, tipo = "text", valor = "", extra = "") {
 // ---------------- Empleados: alta/edición/borrado ----------------
 document.getElementById("btn-nuevo-empleado").addEventListener("click", () => abrirFormEmpleado());
 
+async function borrarRegistrosEmpleado(employeeId) {
+  const consultas = [
+    query(collection(db, "registros"), where("employeeId", "==", employeeId)),
+    query(collection(db, "vacaciones"), where("employeeId", "==", employeeId))
+  ];
+  for (const consulta of consultas) {
+    const snap = await getDocs(consulta);
+    for (let inicio = 0; inicio < snap.docs.length; inicio += 450) {
+      const lote = writeBatch(db);
+      snap.docs.slice(inicio, inicio + 450).forEach((registro) => lote.delete(registro.ref));
+      await lote.commit();
+    }
+  }
+}
+
 document.addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
@@ -204,7 +219,8 @@ document.addEventListener("click", async (e) => {
   if (btn.dataset.action === "edit-empleado") abrirFormEmpleado(empleados.find(x => x.id === id));
   if (btn.dataset.action === "delete-empleado") {
     const emp = empleados.find(x => x.id === id);
-    if (confirm(`¿Eliminar a "${emp?.nombre}"? Esto NO borra sus registros diarios históricos, solo su ficha de empleado (deja de aparecer en el registro diario).`)) {
+    if (confirm(`¿Eliminar completamente a "${emp?.nombre}"? Se borrará su ficha, registros diarios y vacaciones asociadas. Esta acción no se puede deshacer.`)) {
+      await borrarRegistrosEmpleado(id);
       await deleteDoc(doc(db, "empleados", id));
     }
   }
