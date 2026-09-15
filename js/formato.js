@@ -45,7 +45,7 @@ export function formatoHora12(hhmm) {
 export function formatoDiasHoras(decimalHoras, horasPorDia = 8) {
   const horas = Number(decimalHoras) || 0;
   const negativo = horas < 0;
-  const totalHoras = Math.round(Math.abs(horas));
+  const totalHoras = Math.floor(Math.abs(horas));
   const dias = Math.floor(totalHoras / horasPorDia);
   const horasRestantes = totalHoras % horasPorDia;
   const signo = negativo ? "-" : "";
