@@ -329,6 +329,13 @@ export async function exportarExcelBonito(hojas, nombreArchivo) {
         columnas.forEach((c, i) => {
           const cell = filaExcel.getCell(i + 1);
           cell.value = i < especialDesde ? (fila[c] ?? "") : "";
+          if (i >= especialDesde) {
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fila._especial.color } };
+            cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+          } else {
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
+            cell.font = { color: { argb: "FF000000" } };
+          }
           cell.border = bordeCompleto();
           cell.alignment = { vertical: "middle", horizontal: "center" };
         });

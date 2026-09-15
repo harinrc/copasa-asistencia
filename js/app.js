@@ -33,11 +33,11 @@ function etiquetaFecha(fechaStr) {
 
 // Color de franja para cada tipo de día especial (igual estilo que el Excel original)
 const COLOR_TIPO_ESPECIAL = {
-  subsidio: "FF8BC34A",          // verde
-  a_cuenta_acumulado: "FF29B6F6", // azul
-  falta: "FFEF5350",              // rojo
-  permiso: "FFAB47BC",            // morado
-  vacaciones: "FF26A69A"          // verde azulado
+  subsidio: "FF92D050",           // verde claro
+  a_cuenta_acumulado: "FF00B0F0", // celeste
+  falta: "FFFF0000",               // rojo
+  permiso: "FF70AD47",             // verde oscuro
+  vacaciones: "FFFFFF00"           // amarillo
 };
 
 const COLUMNAS_REGISTRO_DIARIO = [
@@ -386,7 +386,6 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
 
     return {
       nombre: nombreHoja,
-      usarPlantilla: true,
       titulo,
       tituloColumna: 4,
       anchos: [16.85546875, 43.140625, 20, 19.140625, 19.140625, 21.42578125, 17.5703125, 17.5703125, 26.140625],
