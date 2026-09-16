@@ -7,7 +7,7 @@ import {
   collection, doc, deleteDoc, setDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { formatoHHMM, parseHHMM, fechaLocalHoy, ordenarEmpleados } from "./formato.js";
+import { formatoHHMM, parseHHMM, fechaLocalHoy, ordenarEmpleados, coincideBusqueda } from "./formato.js";
 
 let currentUser = null;
 let isAdmin = false;
