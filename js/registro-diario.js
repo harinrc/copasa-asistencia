@@ -4,7 +4,7 @@
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  collection, doc, deleteDoc, setDoc, getDoc,
+  collection, doc, addDoc, deleteDoc, setDoc, getDoc,
   onSnapshot, query, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { formatoHHMM, parseHHMM, fechaLocalHoy, ordenarEmpleados, coincideBusqueda } from "./formato.js";
@@ -33,6 +33,7 @@ onAuthStateChanged(auth, async (user) => {
   const snap = await getDoc(doc(db, "users", user.uid));
   isAdmin = snap.exists() && snap.data().role === "admin";
   document.getElementById("user-role").textContent = isAdmin ? "Administrador" : "Empleado";
+  document.querySelectorAll(".dia-menu.admin-only").forEach(el => el.style.display = isAdmin ? "" : "none");
   iniciarListeners();
 });
 
@@ -58,6 +59,7 @@ function iniciarListeners() {
   onSnapshot(query(collection(db, "feriados"), orderBy("fecha", "desc")), (snap) => {
     feriados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderTemporadaIndicador();
+    actualizarMenuFeriado();
   });
 
   onSnapshot(doc(db, "config", "horario"), (snap) => {
@@ -142,6 +144,7 @@ function renderTemporadaIndicador() {
 document.getElementById("registro-fecha").addEventListener("change", () => {
   renderRegistroDiario();
   renderTemporadaIndicador();
+  actualizarMenuFeriado();
 });
 
 function sumarDias(fechaStr, dias) {
@@ -155,18 +158,69 @@ document.getElementById("btn-dia-anterior").addEventListener("click", () => {
   input.value = sumarDias(getFechaRegistro(), -1);
   renderRegistroDiario();
   renderTemporadaIndicador();
+  actualizarMenuFeriado();
 });
 document.getElementById("btn-dia-siguiente").addEventListener("click", () => {
   const input = document.getElementById("registro-fecha");
   input.value = sumarDias(getFechaRegistro(), 1);
   renderRegistroDiario();
   renderTemporadaIndicador();
+  actualizarMenuFeriado();
 });
 document.getElementById("btn-dia-hoy").addEventListener("click", () => {
   const input = document.getElementById("registro-fecha");
   input.value = fechaLocalHoy();
   renderRegistroDiario();
   renderTemporadaIndicador();
+  actualizarMenuFeriado();
+});
+
+// ---------------- Menú discreto: marcar/quitar feriado del día actual ----------------
+function actualizarMenuFeriado() {
+  const btnMarcar = document.getElementById("btn-marcar-feriado");
+  const btnQuitar = document.getElementById("btn-quitar-feriado");
+  if (!btnMarcar || !btnQuitar) return;
+  const esFeriadoHoy = feriados.some(f => f.fecha === getFechaRegistro());
+  btnMarcar.hidden = esFeriadoHoy;
+  btnQuitar.hidden = !esFeriadoHoy;
+}
+
+document.getElementById("btn-dia-menu")?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  actualizarMenuFeriado();
+  const panel = document.getElementById("dia-menu-panel");
+  panel.hidden = !panel.hidden;
+});
+document.addEventListener("click", () => {
+  const panel = document.getElementById("dia-menu-panel");
+  if (panel) panel.hidden = true;
+});
+
+document.getElementById("btn-marcar-feriado")?.addEventListener("click", () => {
+  document.getElementById("dia-menu-panel").hidden = true;
+  const fecha = getFechaRegistro();
+  const html = `
+    <p class="auth-hint" style="text-align:left;margin:0 0 0.75rem;">
+      Se marcará <strong>${fecha}</strong> como feriado. Ese día dejará de
+      asumir el horario por defecto para todos.
+    </p>
+    ${campo("f-nombre-feriado", "Nombre (opcional, ej. Día de la Independencia)", "text", "")}
+  `;
+  abrirModal("Marcar como feriado", html, async () => {
+    const nombre = document.getElementById("f-nombre-feriado").value.trim();
+    await addDoc(collection(db, "feriados"), { fecha, nombre });
+    cerrarModal();
+  });
+});
+
+document.getElementById("btn-quitar-feriado")?.addEventListener("click", async () => {
+  document.getElementById("dia-menu-panel").hidden = true;
+  const fecha = getFechaRegistro();
+  const feriado = feriados.find(f => f.fecha === fecha);
+  if (!feriado) return;
+  if (confirm(`¿Quitar el feriado registrado en ${fecha}?`)) {
+    await deleteDoc(doc(db, "feriados", feriado.id));
+  }
 });
 
 function getFechaRegistro() {

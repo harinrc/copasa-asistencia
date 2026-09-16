@@ -248,6 +248,32 @@ body > #btn-instalar-app {
   border-radius: 6px;
 }
 
+.dia-menu { position: relative; }
+.dia-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  min-width: 230px;
+  z-index: 20;
+  overflow: hidden;
+}
+.dia-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.85rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.dia-menu-item:hover { background: #f3f4f6; }
+
 .container {
   max-width: 1200px;
   margin: 1.5rem auto;
