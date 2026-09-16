@@ -62,13 +62,14 @@ function render() {
   const tbody = document.querySelector("#tabla-salario tbody");
   tbody.innerHTML = "";
   const busqueda = document.getElementById("buscar-salario")?.value || "";
-  filasPeriodo().forEach(r => {
+  filasPeriodo().forEach((r, indice) => {
     const emp = empleados.find(e => e.id === r.employeeId);
     const nombre = emp ? emp.nombre : r.employeeNombre || "";
     const cargo = emp?.cargo || "";
     if (!coincideBusqueda(nombre, busqueda) && !coincideBusqueda(cargo, busqueda)) return;
     const tr = document.createElement("tr");
     tr.innerHTML = `
+      <td>${indice + 1}</td>
       <td>${escapeHtml(nombre)}</td>
       <td>${escapeHtml(cargo)}</td>
       <td>${r.fecha}</td>
@@ -83,10 +84,12 @@ document.getElementById("buscar-salario").addEventListener("input", render);
 document.getElementById("btn-exportar").addEventListener("click", async () => {
   const btn = document.getElementById("btn-exportar");
   const { desde, hasta } = getRangoFechas();
-  const filas = filasPeriodo().map(r => {
+  const filas = filasPeriodo().map((r, indice) => {
     const emp = empleados.find(e => e.id === r.employeeId);
     return {
+      "N°": indice + 1,
       "Empleado": emp ? emp.nombre : r.employeeNombre || "",
+      "Cargo": emp?.cargo || "",
       "Fecha": r.fecha,
       "Motivo": motivo(r),
       "Horas deducidas": formatoHHMM(r.horasDeducidasSalario || 0),

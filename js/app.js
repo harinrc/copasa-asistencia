@@ -41,7 +41,7 @@ const COLOR_TIPO_ESPECIAL = {
 };
 
 const COLUMNAS_REGISTRO_DIARIO = [
-  "Cargo", "Nombre", "Entrada", "Salida", "Llegada Tarde",
+  "N°", "Cargo", "Nombre", "Entrada", "Salida", "Llegada Tarde",
   "HORAS ACUMULADAS ENTRADA", "HORAS ACUMULADAS SALIDAS", "Total", "Observaciones"
 ];
 
@@ -143,9 +143,10 @@ function renderEmpleados() {
   const busqueda = document.getElementById("buscar-empleados")?.value || "";
   empleados
     .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
-    .forEach(emp => {
+    .forEach((emp, indice) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
+      <td>${indice + 1}</td>
       <td>${escapeHtml(emp.nombre)}</td>
       <td>${escapeHtml(emp.cargo || "")}</td>
       <td>${formatoHHMM(emp.saldoInicialHoras || 0)} hrs</td>
@@ -343,7 +344,7 @@ function renderBanco() {
 
   empleados
     .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
-    .forEach(emp => {
+    .forEach((emp, indice) => {
     const propios = enPeriodo.filter(r => r.employeeId === emp.id);
     const ganadoPeriodo = round2(propios.reduce((a, r) => a + gananciaBanco(r), 0));
     const gastadoPeriodo = round2(propios.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
@@ -352,6 +353,7 @@ function renderBanco() {
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
+      <td>${indice + 1}</td>
       <td>${escapeHtml(emp.nombre)}</td>
       <td>${escapeHtml(emp.cargo || "")}</td>
       <td>${formatoHHMM(emp.saldoInicialHoras || 0)}</td>
@@ -373,13 +375,14 @@ function renderDeducidas() {
   const busquedaDeducidas = document.getElementById("buscar-deducidas")?.value || "";
   registrosFiltrados(desde, hasta)
     .filter(r => (r.horasDeducidasBanco || 0) > 0)
-    .forEach(r => {
+    .forEach((r, indice) => {
       const emp = empleados.find(e => e.id === r.employeeId);
       const nombre = emp ? emp.nombre : r.employeeNombre || "";
       const cargo = emp?.cargo || "";
       if (!coincideBusqueda(nombre, busquedaDeducidas) && !coincideBusqueda(cargo, busquedaDeducidas)) return;
       const tr = document.createElement("tr");
       tr.innerHTML = `
+        <td>${indice + 1}</td>
         <td>${escapeHtml(nombre)}</td>
         <td>${escapeHtml(cargo)}</td>
         <td>${r.fecha}</td>
@@ -393,13 +396,14 @@ function renderDeducidas() {
   const busquedaVacaciones = document.getElementById("buscar-vacaciones-horas")?.value || "";
   registrosFiltrados(desde, hasta)
     .filter(r => (r.horasDeducidasVacaciones || 0) > 0)
-    .forEach(r => {
+    .forEach((r, indice) => {
       const emp = empleados.find(e => e.id === r.employeeId);
       const nombre = emp ? emp.nombre : r.employeeNombre || "";
       const cargo = emp?.cargo || "";
       if (!coincideBusqueda(nombre, busquedaVacaciones) && !coincideBusqueda(cargo, busquedaVacaciones)) return;
       const tr = document.createElement("tr");
       tr.innerHTML = `
+        <td>${indice + 1}</td>
         <td>${escapeHtml(nombre)}</td>
         <td>${escapeHtml(cargo)}</td>
         <td>${r.fecha}</td>
@@ -429,7 +433,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   const nombresUsados = new Set();
   const hojasPorDia = fechasPeriodo.map(fecha => {
     const horarioHoy = horarioEsperado(fecha);
-    const filas = empleados.filter(e => e.activo !== false).map(emp => {
+    const filas = empleados.filter(e => e.activo !== false).map((emp, indice) => {
       const regReal = registros.find(r => r.employeeId === emp.id && r.fecha === fecha);
       const reg = regReal || (horarioHoy ? {
         tipo: "normal", horaEntrada: horarioHoy.entrada, horaSalida: horarioHoy.salida,
@@ -443,6 +447,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       // igual que en el Excel original.
       if (reg && reg.tipo !== "normal" && COLOR_TIPO_ESPECIAL[reg.tipo]) {
         return {
+          "N°": indice + 1,
           "Cargo": emp.cargo || "",
           "Nombre": emp.nombre,
           _especial: { texto: ETIQUETAS_TIPO[reg.tipo].toUpperCase(), color: COLOR_TIPO_ESPECIAL[reg.tipo] }
@@ -450,6 +455,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       }
 
       return {
+        "N°": indice + 1,
         "Cargo": emp.cargo || "",
         "Nombre": emp.nombre,
         "Entrada": reg?.horaEntrada ? formatoHora12(reg.horaEntrada) : "—",
@@ -473,8 +479,9 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
     return {
       nombre: nombreHoja,
       titulo,
-      tituloColumna: 4,
-      anchos: [16.85546875, 43.140625, 20, 19.140625, 19.140625, 21.42578125, 17.5703125, 17.5703125, 26.140625],
+      tituloColumna: 5,
+      especialDesde: 3,
+      anchos: [6, 16.85546875, 43.140625, 20, 19.140625, 19.140625, 21.42578125, 17.5703125, 17.5703125, 26.140625],
       columnas: COLUMNAS_REGISTRO_DIARIO,
       filas
     };
@@ -502,12 +509,13 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
     return formatoHHMM(reg.horasDeducidasBanco);
   }
 
-  const filasBanco = empleados.map(emp => {
+  const filasBanco = empleados.map((emp, indice) => {
     const propios = enPeriodo.filter(r => r.employeeId === emp.id);
     const ganadoPeriodo = round2(propios.reduce((a, r) => a + gananciaBanco(r), 0));
     const gastadoPeriodo = round2(propios.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
     const saldoFinal = calcularBancoEmpleado(emp, hasta);
     const fila = {
+      "N°": indice + 1,
       "Empleado": emp.nombre,
       "Cargo": emp.cargo || "",
       "Ganado en periodo": formatoHHMM(ganadoPeriodo),
@@ -522,8 +530,8 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
     return fila;
   });
 
-  const filasDeducidas = empleados.map(emp => {
-    const fila = { "Empleado": emp.nombre, "Cargo": emp.cargo || "" };
+  const filasDeducidas = empleados.map((emp, indice) => {
+    const fila = { "N°": indice + 1, "Empleado": emp.nombre, "Cargo": emp.cargo || "" };
     fechasPeriodo.forEach(f => {
       fila[etiquetaFecha(f)] = celdaDeducidaTexto(registros.find(r => r.employeeId === emp.id && r.fecha === f));
     });

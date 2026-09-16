@@ -74,13 +74,13 @@ function renderGrid() {
   const thead = tabla.querySelector("thead tr");
   const tbody = tabla.querySelector("tbody");
 
-  thead.innerHTML = `<th>Empleado</th><th>Cargo</th>${fechas.map(f => `<th>${etiquetaFecha(f)}</th>`).join("")}`;
+  thead.innerHTML = `<th>N°</th><th>Empleado</th><th>Cargo</th>${fechas.map(f => `<th>${etiquetaFecha(f)}</th>`).join("")}`;
 
   tbody.innerHTML = "";
   const busqueda = document.getElementById("buscar-deducidas-grid")?.value || "";
   empleados
     .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
-    .forEach(emp => {
+    .forEach((emp, indice) => {
     const propios = registros.filter(r => r.employeeId === emp.id);
     const celdas = fechas.map(f => {
       const reg = propios.find(r => r.fecha === f);
@@ -90,7 +90,7 @@ function renderGrid() {
     }).join("");
 
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${escapeHtml(emp.nombre)}</td><td>${escapeHtml(emp.cargo || "")}</td>${celdas}`;
+    tr.innerHTML = `<td>${indice + 1}</td><td>${escapeHtml(emp.nombre)}</td><td>${escapeHtml(emp.cargo || "")}</td>${celdas}`;
     tbody.appendChild(tr);
   });
 }
@@ -103,9 +103,9 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   if (!desde || !hasta) return alert("Elige un rango de fechas primero.");
   const fechas = listarFechas(desde, hasta);
 
-  const filas = empleados.map(emp => {
+  const filas = empleados.map((emp, indice) => {
     const propios = registros.filter(r => r.employeeId === emp.id);
-    const fila = { "Empleado": emp.nombre, "Cargo": emp.cargo || "" };
+    const fila = { "N°": indice + 1, "Empleado": emp.nombre, "Cargo": emp.cargo || "" };
     fechas.forEach(f => {
       const reg = propios.find(r => r.fecha === f);
       fila[etiquetaFecha(f)] = celdaDeducida(reg).texto;

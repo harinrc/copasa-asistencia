@@ -17,9 +17,17 @@ function numeroColumna(letras) {
   return letras.split("").reduce((total, letra) => total * 26 + letra.charCodeAt(0) - 64, 0);
 }
 
-function bordeCompleto() {
-  const estilo = { style: "thin", color: { argb: COLOR_BORDE } };
-  return { top: estilo, left: estilo, bottom: estilo, right: estilo };
+// Borde para una celda según su posición dentro de la tabla: lados que tocan
+// el exterior salen gruesos, lados internos quedan delgados (grid normal).
+function bordeSegunPosicion({ arriba = false, abajo = false, izquierda = false, derecha = false } = {}) {
+  const delgado = { style: "thin", color: { argb: COLOR_BORDE } };
+  const grueso = { style: "medium", color: { argb: "FF1F2937" } };
+  return {
+    top: arriba ? grueso : delgado,
+    bottom: abajo ? grueso : delgado,
+    left: izquierda ? grueso : delgado,
+    right: derecha ? grueso : delgado
+  };
 }
 
 function copiarEstiloFila(origen, destino) {
@@ -293,19 +301,25 @@ export async function exportarExcelBonito(hojas, nombreArchivo) {
 
     ws.columns = columnas.map((c, indice) => ({
       key: c,
-      width: hoja.anchos?.[indice] ?? Math.min(Math.max(c.length, ...filas.map((f) => String(f[c] ?? "").length)) + 2, 42)
+      width: hoja.anchos?.[indice] ?? Math.min(Math.max(c.length, ...filas.map((f) => String(f[c] ?? "").length)) + 4, 44)
     }));
 
     let filaActual = 1;
+    const ultimaColumna = columnas.length - 1;
 
     if (titulo) {
       const columnaTitulo = hoja.tituloColumna || 1;
       if (!hoja.tituloColumna) ws.mergeCells(1, 1, 1, columnas.length);
+      const filaTitulo = ws.getRow(1);
+      columnas.forEach((c, i) => {
+        const cell = filaTitulo.getCell(i + 1);
+        cell.border = bordeSegunPosicion({ arriba: true, izquierda: i === 0, derecha: i === ultimaColumna });
+      });
       const celdaTitulo = ws.getCell(1, columnaTitulo);
       celdaTitulo.value = titulo;
-      celdaTitulo.font = { bold: true, size: 13, color: { argb: COLOR_TITULO } };
+      celdaTitulo.font = { bold: true, size: 14, color: { argb: COLOR_TITULO } };
       celdaTitulo.alignment = { horizontal: "center", vertical: "middle" };
-      ws.getRow(1).height = 26;
+      filaTitulo.height = 30;
       filaActual = 2;
     }
 
@@ -314,16 +328,18 @@ export async function exportarExcelBonito(hojas, nombreArchivo) {
     columnas.forEach((c, i) => {
       const cell = filaEncabezado.getCell(i + 1);
       cell.value = c;
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.font = { bold: true, size: 12, color: { argb: "FFFFFFFF" } };
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR_ENCABEZADO } };
       cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
-      cell.border = bordeCompleto();
+      cell.border = bordeSegunPosicion({ arriba: !titulo, izquierda: i === 0, derecha: i === ultimaColumna });
     });
-    filaEncabezado.height = 24;
+    filaEncabezado.height = 28;
     filaActual++;
 
     filas.forEach((fila, indiceDatos) => {
       const filaExcel = ws.getRow(filaActual);
+      filaExcel.height = 22;
+      const esUltimaFila = indiceDatos === filas.length - 1;
 
       if (fila._especial) {
         columnas.forEach((c, i) => {
@@ -331,28 +347,28 @@ export async function exportarExcelBonito(hojas, nombreArchivo) {
           cell.value = i < especialDesde ? (fila[c] ?? "") : "";
           if (i >= especialDesde) {
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fila._especial.color } };
-            cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+            cell.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" } };
           } else {
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFFFFF" } };
-            cell.font = { color: { argb: "FF000000" } };
+            cell.font = { size: 11, color: { argb: "FF000000" } };
           }
-          cell.border = bordeCompleto();
+          cell.border = bordeSegunPosicion({ abajo: esUltimaFila, izquierda: i === 0, derecha: i === ultimaColumna });
           cell.alignment = { vertical: "middle", horizontal: "center" };
         });
         if (columnas.length > especialDesde) {
           ws.mergeCells(filaActual, especialDesde + 1, filaActual, columnas.length);
           const celdaEspecial = filaExcel.getCell(especialDesde + 1);
           celdaEspecial.value = fila._especial.texto;
-          celdaEspecial.font = { bold: true, color: { argb: "FFFFFFFF" } };
+          celdaEspecial.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" } };
           celdaEspecial.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fila._especial.color } };
           celdaEspecial.alignment = { vertical: "middle", horizontal: "center" };
-          celdaEspecial.border = bordeCompleto();
         }
       } else {
         columnas.forEach((c, i) => {
           const cell = filaExcel.getCell(i + 1);
           cell.value = fila[c] ?? "";
-          cell.border = bordeCompleto();
+          cell.font = { size: 11 };
+          cell.border = bordeSegunPosicion({ abajo: esUltimaFila, izquierda: i === 0, derecha: i === ultimaColumna });
           cell.alignment = { vertical: "middle", horizontal: "center" };
           if (indiceDatos % 2 === 1) {
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR_FRANJA } };

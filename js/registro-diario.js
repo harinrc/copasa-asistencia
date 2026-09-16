@@ -238,7 +238,7 @@ function renderRegistroDiario() {
   const busqueda = document.getElementById("buscar-registro")?.value || "";
   empleados
     .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
-    .forEach(emp => {
+    .forEach((emp, indice) => {
     const regReal = registros.find(r => r.employeeId === emp.id && r.fecha === fecha);
     // Si nadie editó nada y es un día laboral normal, se asume "Normal" con el
     // horario configurado aplicado automáticamente (0 horas de más/de menos).
@@ -251,6 +251,7 @@ function renderRegistroDiario() {
     const esAplicadoPorDefecto = !regReal && !!reg;
     const tr = document.createElement("tr");
     tr.innerHTML = `
+      <td>${indice + 1}</td>
       <td>${escapeHtml(emp.cargo || "")}</td>
       <td>${escapeHtml(emp.nombre)}</td>
       <td>${ETIQUETAS_TIPO[reg?.tipo] || "—"}${esAplicadoPorDefecto ? ` <span class="badge" style="background:#94a3b8;color:#fff;">por defecto</span>` : ""}${reg?.modoDiaEspecial ? ` <span class="badge" style="background:${reg.modoDiaEspecial === "banco" ? "#0ea5e9" : "#f59e0b"};color:#fff;">${reg.modoDiaEspecial === "banco" ? "control" : "salario"}</span>` : ""}${reg?.coberturaTardanza === "vacaciones" ? ` <span class="badge" style="background:#a855f7;color:#fff;">a cta. vacaciones</span>` : ""}${reg?.constanciaMedica ? ` <span class="badge" style="background:var(--primary-dark);color:#fff;">constancia médica</span>` : ""}</td>

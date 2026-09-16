@@ -81,11 +81,12 @@ function render() {
   const busqueda = document.getElementById("buscar-vacaciones")?.value || "";
   empleados
     .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
-    .forEach(emp => {
+    .forEach((emp, indice) => {
     const v = vacacionesPorAnio.find(x => x.employeeId === emp.id);
     const estado = calcularEstado(v);
     const tr = document.createElement("tr");
     tr.innerHTML = `
+      <td>${indice + 1}</td>
       <td>${escapeHtml(emp.nombre)}</td>
       <td>${escapeHtml(emp.cargo || "")}</td>
       <td><span class="estado-badge ${estado.clase}">${estado.texto}</span></td>

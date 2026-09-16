@@ -99,13 +99,13 @@ function renderGrid() {
   const tbody = tabla.querySelector("tbody");
   const columnasResumen = ["Saldo inicial", "Ganado periodo", "Gastado periodo", "Saldo final", "Días disp."];
 
-  thead.innerHTML = `<th>Empleado</th><th>Cargo</th>${columnasResumen.map(c => `<th>${c}</th>`).join("")}${fechas.map(f => `<th>${etiquetaFecha(f)}</th>`).join("")}`;
+  thead.innerHTML = `<th>N°</th><th>Empleado</th><th>Cargo</th>${columnasResumen.map(c => `<th>${c}</th>`).join("")}${fechas.map(f => `<th>${etiquetaFecha(f)}</th>`).join("")}`;
 
   tbody.innerHTML = "";
   const busqueda = document.getElementById("buscar-acumulado")?.value || "";
   empleados
     .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
-    .forEach(emp => {
+    .forEach((emp, indice) => {
     const propios = registros.filter(r => r.employeeId === emp.id);
     const enPeriodo = propios.filter(r => r.fecha >= fechas[0] && r.fecha <= fechas[fechas.length - 1]);
     const ganadoPeriodo = round2(enPeriodo.reduce((a, r) => a + gananciaBanco(r), 0));
@@ -125,7 +125,7 @@ function renderGrid() {
     }).join("");
 
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${escapeHtml(emp.nombre)}</td><td>${escapeHtml(emp.cargo || "")}</td>${resumenHtml}${celdas}`;
+    tr.innerHTML = `<td>${indice + 1}</td><td>${escapeHtml(emp.nombre)}</td><td>${escapeHtml(emp.cargo || "")}</td>${resumenHtml}${celdas}`;
     tbody.appendChild(tr);
   });
 }
@@ -138,11 +138,12 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   if (!desde || !hasta) return alert("Elige un rango de fechas primero.");
   const fechas = listarFechas(desde, hasta);
 
-  const filas = empleados.map(emp => {
+  const filas = empleados.map((emp, indice) => {
     const propios = registros.filter(r => r.employeeId === emp.id);
     const enPeriodo = propios.filter(r => r.fecha >= desde && r.fecha <= hasta);
     const saldoFinal = calcularBancoEmpleado(emp, hasta);
     const fila = {
+      "N°": indice + 1,
       "Empleado": emp.nombre,
       "Cargo": emp.cargo || "",
       "Saldo inicial": formatoHHMM(emp.saldoInicialHoras || 0),
