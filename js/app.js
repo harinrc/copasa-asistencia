@@ -324,11 +324,10 @@ document.getElementById("fecha-fin").addEventListener("change", () => { renderBa
 function round2(n) { return Math.round(n * 100) / 100; }
 function gananciaBanco(r) { return (r.horasAcumuladasEntrada || 0) + (r.horasAcumuladasSalidas || 0); }
 
-function calcularBancoEmpleado(emp, hasta) {
+function calcularBancoEmpleado(emp) {
   const desdeMigracion = registros.filter(r =>
     r.employeeId === emp.id &&
-    (!emp.saldoInicialFecha || r.fecha >= emp.saldoInicialFecha) &&
-    (!hasta || r.fecha <= hasta)
+    (!emp.saldoInicialFecha || r.fecha >= emp.saldoInicialFecha)
   );
   const ganadoTotal = desdeMigracion.reduce((a, r) => a + gananciaBanco(r), 0);
   const gastadoTotal = desdeMigracion.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0);
@@ -348,7 +347,7 @@ function renderBanco() {
     const propios = enPeriodo.filter(r => r.employeeId === emp.id);
     const ganadoPeriodo = round2(propios.reduce((a, r) => a + gananciaBanco(r), 0));
     const gastadoPeriodo = round2(propios.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
-    const saldoFinal = calcularBancoEmpleado(emp, hasta);
+    const saldoFinal = calcularBancoEmpleado(emp);
     const diasGozados = propios.filter(r => r.tipo === "a_cuenta_acumulado").length;
 
     const tr = document.createElement("tr");
@@ -499,12 +498,10 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       case "falta": return "FALTA";
       case "permiso": return "PERMISO AUTORIZADO";
       case "vacaciones": return "VAC";
-      case "a_cuenta_acumulado": return `-${formatoHHMM(reg.horasDeducidasBanco || 0)}`;
+      case "a_cuenta_acumulado": return "—";
       default: {
-        const neto = gananciaBanco(reg) - (reg?.horasDeducidasBanco || 0);
-        if (neto > 0) return formatoHHMM(neto);
-        if (neto < 0) return `-${formatoHHMM(Math.abs(neto))}`;
-        return "00:00";
+        const g = gananciaBanco(reg);
+        return g > 0 ? formatoHHMM(g) : "—";
       }
     }
   }
@@ -518,11 +515,12 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
     const propios = enPeriodo.filter(r => r.employeeId === emp.id);
     const ganadoPeriodo = round2(propios.reduce((a, r) => a + gananciaBanco(r), 0));
     const gastadoPeriodo = round2(propios.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
-    const saldoFinal = calcularBancoEmpleado(emp, hasta);
+    const saldoFinal = calcularBancoEmpleado(emp);
     const fila = {
       "N°": indice + 1,
       "Empleado": emp.nombre,
       "Cargo": emp.cargo || "",
+      "Saldo inicial": formatoHHMM(emp.saldoInicialHoras || 0),
       "Ganado en periodo": formatoHHMM(ganadoPeriodo),
       "Gastado en periodo": formatoHHMM(gastadoPeriodo),
       "Saldo final": formatoHHMM(saldoFinal),

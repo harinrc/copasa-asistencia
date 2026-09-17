@@ -70,21 +70,18 @@ function celdaAcumulado(reg) {
     case "falta": return { texto: "FALTA", clase: "celda-especial" };
     case "permiso": return { texto: "PERMISO AUTORIZADO", clase: "celda-especial" };
     case "vacaciones": return { texto: "VAC", clase: "celda-especial" };
-    case "a_cuenta_acumulado": return { texto: `-${formatoHHMM(reg.horasDeducidasBanco || 0)}`, clase: "celda-deduccion" };
+    case "a_cuenta_acumulado": return { texto: "—", clase: "celda-vacia" };
     default: {
-      const neto = gananciaBanco(reg) - (reg.horasDeducidasBanco || 0);
-      if (neto > 0) return { texto: formatoHHMM(neto), clase: "celda-normal" };
-      if (neto < 0) return { texto: `-${formatoHHMM(Math.abs(neto))}`, clase: "celda-deduccion" };
-      return { texto: "00:00", clase: "celda-vacia" };
+      const g = gananciaBanco(reg);
+      return g > 0 ? { texto: formatoHHMM(g), clase: "celda-normal" } : { texto: "—", clase: "celda-vacia" };
     }
   }
 }
 
-function calcularBancoEmpleado(emp, hasta) {
+function calcularBancoEmpleado(emp) {
   const relevantes = registros.filter(r =>
     r.employeeId === emp.id &&
-    (!emp.saldoInicialFecha || r.fecha >= emp.saldoInicialFecha) &&
-    (!hasta || r.fecha <= hasta)
+    (!emp.saldoInicialFecha || r.fecha >= emp.saldoInicialFecha)
   );
   const ganado = relevantes.reduce((a, r) => a + gananciaBanco(r), 0);
   const gastado = relevantes.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0);
@@ -99,7 +96,7 @@ function renderGrid() {
   const tabla = document.getElementById("grid-acumulado");
   const thead = tabla.querySelector("thead tr");
   const tbody = tabla.querySelector("tbody");
-  const columnasResumen = ["Saldo inicial", "Ganado periodo", "Gastado periodo", "Saldo final", "Días disp."];
+  const columnasResumen = ["Saldo inicial", "Ganado periodo", "Gastado periodo", "Total acumulado", "Días disp."];
 
   thead.innerHTML = `<th>N°</th><th>Empleado</th><th>Cargo</th>${columnasResumen.map(c => `<th>${c}</th>`).join("")}${fechas.map(f => `<th>${etiquetaFecha(f)}</th>`).join("")}`;
 
@@ -112,13 +109,13 @@ function renderGrid() {
     const enPeriodo = propios.filter(r => r.fecha >= fechas[0] && r.fecha <= fechas[fechas.length - 1]);
     const ganadoPeriodo = round2(enPeriodo.reduce((a, r) => a + gananciaBanco(r), 0));
     const gastadoPeriodo = round2(enPeriodo.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0));
-    const saldoFinal = calcularBancoEmpleado(emp, fechas[fechas.length - 1]);
+    const saldoTotal = calcularBancoEmpleado(emp);
     const resumenHtml = `
       <td class="resumen">${formatoHHMM(emp.saldoInicialHoras || 0)}</td>
       <td class="resumen">${formatoHHMM(ganadoPeriodo)}</td>
       <td class="resumen">${formatoHHMM(gastadoPeriodo)}</td>
-      <td class="resumen">${formatoHHMM(saldoFinal)}</td>
-      <td class="resumen">${formatoDiasHoras(saldoFinal)}</td>`;
+      <td class="resumen">${formatoHHMM(saldoTotal)}</td>
+      <td class="resumen">${formatoDiasHoras(saldoTotal)}</td>`;
 
     const celdas = fechas.map(f => {
       const reg = propios.find(r => r.fecha === f);
@@ -143,7 +140,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   const filas = empleados.map((emp, indice) => {
     const propios = registros.filter(r => r.employeeId === emp.id);
     const enPeriodo = propios.filter(r => r.fecha >= desde && r.fecha <= hasta);
-    const saldoFinal = calcularBancoEmpleado(emp, hasta);
+    const saldoTotal = calcularBancoEmpleado(emp);
     const fila = {
       "N°": indice + 1,
       "Empleado": emp.nombre,
@@ -151,8 +148,8 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       "Saldo inicial": formatoHHMM(emp.saldoInicialHoras || 0),
       "Ganado periodo": formatoHHMM(round2(enPeriodo.reduce((a, r) => a + gananciaBanco(r), 0))),
       "Gastado periodo": formatoHHMM(round2(enPeriodo.reduce((a, r) => a + (r.horasDeducidasBanco || 0), 0))),
-      "Saldo final": formatoHHMM(saldoFinal),
-      "Días disponibles": formatoDiasHoras(saldoFinal)
+      "Saldo final": formatoHHMM(saldoTotal),
+      "Días disponibles": formatoDiasHoras(saldoTotal)
     };
     fechas.forEach(f => {
       const reg = propios.find(r => r.fecha === f);
