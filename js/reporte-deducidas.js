@@ -61,9 +61,19 @@ function etiquetaFecha(fechaStr) {
 }
 
 function celdaDeducida(reg) {
-  if (!reg || !(reg.horasDeducidasBanco > 0)) return { texto: "—", clase: "celda-vacia" };
-  const texto = reg.tipo === "a_cuenta_acumulado" ? "1 día" : formatoHHMM(reg.horasDeducidasBanco);
-  return { texto, clase: "celda-deduccion" };
+  if (!reg) return { texto: "—", clase: "celda-vacia" };
+  switch (reg.tipo) {
+    case "subsidio": return { texto: "SUB", clase: "celda-especial" };
+    case "falta": return { texto: "FALTA", clase: "celda-especial" };
+    case "permiso": return { texto: "PERMISO AUTORIZADO", clase: "celda-especial" };
+    case "vacaciones": return { texto: "VAC", clase: "celda-especial" };
+    default: {
+      if ((reg.horasDeducidasBanco || 0) > 0) {
+        return { texto: formatoHHMM(reg.horasDeducidasBanco), clase: "celda-deduccion" };
+      }
+      return { texto: "—", clase: "celda-vacia" };
+    }
+  }
 }
 
 function renderGrid() {

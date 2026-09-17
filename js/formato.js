@@ -41,15 +41,40 @@ export function formatoHora12(hhmm) {
   return `${String(h12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${periodo}`;
 }
 
-// Decimal (ej. 9.5) -> "1 día y 1 hora" (jornada de 8 horas = 1 día). Admite negativos.
+// Decimal (ej. 9.5) -> "1 día y 1 hora y 30 min", (ej. 8) -> "1 día", (ej. 4) -> "4 horas". Admite negativos.
 export function formatoDiasHoras(decimalHoras, horasPorDia = 8) {
   const horas = Number(decimalHoras) || 0;
+  if (horas === 0) return "0 horas";
   const negativo = horas < 0;
-  const totalHoras = Math.floor(Math.abs(horas));
-  const dias = Math.floor(totalHoras / horasPorDia);
-  const horasRestantes = totalHoras % horasPorDia;
+  const absHoras = Math.abs(horas);
+  const totalMinutos = Math.round(absHoras * 60);
+  const dias = Math.floor(totalMinutos / (horasPorDia * 60));
+  const minRestantes = totalMinutos % (horasPorDia * 60);
+  const hRestantes = Math.floor(minRestantes / 60);
+  const mRestantes = minRestantes % 60;
+
+  const partes = [];
+  if (dias > 0) {
+    partes.push(`${dias} ${dias === 1 ? "día" : "días"}`);
+  }
+
+  if (hRestantes > 0 || mRestantes > 0 || dias === 0) {
+    if (mRestantes > 0) {
+      const txtMin = `${mRestantes} min`;
+      if (hRestantes > 0) {
+        partes.push(`${hRestantes} ${hRestantes === 1 ? "hora" : "horas"} y ${txtMin}`);
+      } else {
+        partes.push(txtMin);
+      }
+    } else if (hRestantes > 0) {
+      partes.push(`${hRestantes} ${hRestantes === 1 ? "hora" : "horas"}`);
+    } else if (dias === 0) {
+      partes.push("0 horas");
+    }
+  }
+
   const signo = negativo ? "-" : "";
-  return `${signo}${dias} día${dias === 1 ? "" : "s"} y ${horasRestantes} hora${horasRestantes === 1 ? "" : "s"}`;
+  return `${signo}${partes.join(" y ")}`;
 }
 
 export function ordenarEmpleados(empleados) {

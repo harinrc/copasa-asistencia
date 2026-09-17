@@ -379,7 +379,7 @@ function renderDeducidas() {
       const nombre = emp ? emp.nombre : r.employeeNombre || "";
       const cargo = emp?.cargo || "";
       if (!coincideBusqueda(nombre, busquedaDeducidas) && !coincideBusqueda(cargo, busquedaDeducidas)) return;
-      const textoBanco = r.tipo === "a_cuenta_acumulado" ? "1 día" : formatoHHMM(r.horasDeducidasBanco || 0);
+      const textoBanco = formatoDiasHoras(r.horasDeducidasBanco || 0);
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${indice + 1}</td>
@@ -401,7 +401,8 @@ function renderDeducidas() {
       const nombre = emp ? emp.nombre : r.employeeNombre || "";
       const cargo = emp?.cargo || "";
       if (!coincideBusqueda(nombre, busquedaVacaciones) && !coincideBusqueda(cargo, busquedaVacaciones)) return;
-      const textoVac = r.tipo === "vacaciones" ? "1 día" : formatoHHMM(r.horasDeducidasVacaciones || 0);
+      const horasVac = r.tipo === "vacaciones" ? 8 : (r.horasDeducidasVacaciones || 0);
+      const textoVac = formatoDiasHoras(horasVac);
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${indice + 1}</td>
@@ -417,7 +418,7 @@ document.getElementById("buscar-deducidas").addEventListener("input", renderDedu
 document.getElementById("buscar-vacaciones-horas").addEventListener("input", renderDeducidas);
 
 function formatoVacaciones(horas, tipo = "") {
-  return tipo === "vacaciones" ? "1 día" : formatoHHMM(horas || 0);
+  return formatoDiasHoras(tipo === "vacaciones" ? 8 : (horas || 0));
 }
 
 // ---------------- Exportar a Excel ----------------
@@ -506,9 +507,19 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
     }
   }
   function celdaDeducidaTexto(reg) {
-    if (!reg || !(reg.horasDeducidasBanco > 0)) return "—";
-    if (reg.tipo === "a_cuenta_acumulado") return "1 día";
-    return formatoHHMM(reg.horasDeducidasBanco);
+    if (!reg) return "—";
+    switch (reg.tipo) {
+      case "subsidio": return "SUB";
+      case "falta": return "FALTA";
+      case "permiso": return "PERMISO AUTORIZADO";
+      case "vacaciones": return "VAC";
+      default: {
+        if ((reg.horasDeducidasBanco || 0) > 0) {
+          return formatoHHMM(reg.horasDeducidasBanco);
+        }
+        return "—";
+      }
+    }
   }
 
   const filasBanco = empleados.map((emp, indice) => {
