@@ -62,7 +62,8 @@ function etiquetaFecha(fechaStr) {
 
 function celdaDeducida(reg) {
   if (!reg || !(reg.horasDeducidasBanco > 0)) return { texto: "—", clase: "celda-vacia" };
-  return { texto: formatoHHMM(reg.horasDeducidasBanco), clase: "celda-deduccion" };
+  const texto = reg.tipo === "a_cuenta_acumulado" ? "1 día" : formatoHHMM(reg.horasDeducidasBanco);
+  return { texto, clase: "celda-deduccion" };
 }
 
 function renderGrid() {

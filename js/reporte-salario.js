@@ -67,6 +67,7 @@ function render() {
     const nombre = emp ? emp.nombre : r.employeeNombre || "";
     const cargo = emp?.cargo || "";
     if (!coincideBusqueda(nombre, busqueda) && !coincideBusqueda(cargo, busqueda)) return;
+    const textoDeduccion = r.tipo === "falta" ? "1 día" : formatoHHMM(r.horasDeducidasSalario || 0);
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${indice + 1}</td>
@@ -74,7 +75,7 @@ function render() {
       <td>${escapeHtml(cargo)}</td>
       <td>${r.fecha}</td>
       <td>${motivo(r)}</td>
-      <td>${formatoHHMM(r.horasDeducidasSalario || 0)}</td>
+      <td>${textoDeduccion}</td>
       <td>${escapeHtml(r.observaciones || "")}</td>`;
     tbody.appendChild(tr);
   });
@@ -92,7 +93,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       "Cargo": emp?.cargo || "",
       "Fecha": r.fecha,
       "Motivo": motivo(r),
-      "Horas deducidas": formatoHHMM(r.horasDeducidasSalario || 0),
+      "Horas deducidas": r.tipo === "falta" ? "1 día" : formatoHHMM(r.horasDeducidasSalario || 0),
       "Observaciones": r.observaciones || ""
     };
   });

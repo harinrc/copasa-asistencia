@@ -72,8 +72,10 @@ function celdaAcumulado(reg) {
     case "vacaciones": return { texto: "VAC", clase: "celda-especial" };
     case "a_cuenta_acumulado": return { texto: `-${formatoHHMM(reg.horasDeducidasBanco || 0)}`, clase: "celda-deduccion" };
     default: {
-      const g = gananciaBanco(reg);
-      return g > 0 ? { texto: formatoHHMM(g), clase: "celda-normal" } : { texto: "00:00", clase: "celda-vacia" };
+      const neto = gananciaBanco(reg) - (reg.horasDeducidasBanco || 0);
+      if (neto > 0) return { texto: formatoHHMM(neto), clase: "celda-normal" };
+      if (neto < 0) return { texto: `-${formatoHHMM(Math.abs(neto))}`, clase: "celda-deduccion" };
+      return { texto: "00:00", clase: "celda-vacia" };
     }
   }
 }

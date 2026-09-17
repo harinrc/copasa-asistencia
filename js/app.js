@@ -380,13 +380,14 @@ function renderDeducidas() {
       const nombre = emp ? emp.nombre : r.employeeNombre || "";
       const cargo = emp?.cargo || "";
       if (!coincideBusqueda(nombre, busquedaDeducidas) && !coincideBusqueda(cargo, busquedaDeducidas)) return;
+      const textoBanco = r.tipo === "a_cuenta_acumulado" ? "1 día" : formatoHHMM(r.horasDeducidasBanco || 0);
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${indice + 1}</td>
         <td>${escapeHtml(nombre)}</td>
         <td>${escapeHtml(cargo)}</td>
         <td>${r.fecha}</td>
-        <td>${formatoHHMM(r.horasDeducidasBanco || 0)}</td>
+        <td>${textoBanco}</td>
         <td>${escapeHtml(r.observaciones || "")}</td>`;
       tbody.appendChild(tr);
     });
@@ -401,13 +402,14 @@ function renderDeducidas() {
       const nombre = emp ? emp.nombre : r.employeeNombre || "";
       const cargo = emp?.cargo || "";
       if (!coincideBusqueda(nombre, busquedaVacaciones) && !coincideBusqueda(cargo, busquedaVacaciones)) return;
+      const textoVac = r.tipo === "vacaciones" ? "1 día" : formatoHHMM(r.horasDeducidasVacaciones || 0);
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${indice + 1}</td>
         <td>${escapeHtml(nombre)}</td>
         <td>${escapeHtml(cargo)}</td>
         <td>${r.fecha}</td>
-        <td>${formatoVacaciones(r.horasDeducidasVacaciones || 0)}</td>
+        <td>${textoVac}</td>
         <td>${escapeHtml(r.observaciones || "")}</td>`;
       tbodyVac.appendChild(tr);
     });
@@ -415,8 +417,8 @@ function renderDeducidas() {
 document.getElementById("buscar-deducidas").addEventListener("input", renderDeducidas);
 document.getElementById("buscar-vacaciones-horas").addEventListener("input", renderDeducidas);
 
-function formatoVacaciones(horas) {
-  return Number(horas) >= 8 ? formatoDiasHoras(horas) : formatoHHMM(horas);
+function formatoVacaciones(horas, tipo = "") {
+  return tipo === "vacaciones" ? "1 día" : formatoHHMM(horas || 0);
 }
 
 // ---------------- Exportar a Excel ----------------
@@ -499,13 +501,16 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       case "vacaciones": return "VAC";
       case "a_cuenta_acumulado": return `-${formatoHHMM(reg.horasDeducidasBanco || 0)}`;
       default: {
-        const g = gananciaBanco(reg);
-        return g > 0 ? formatoHHMM(g) : "00:00";
+        const neto = gananciaBanco(reg) - (reg?.horasDeducidasBanco || 0);
+        if (neto > 0) return formatoHHMM(neto);
+        if (neto < 0) return `-${formatoHHMM(Math.abs(neto))}`;
+        return "00:00";
       }
     }
   }
   function celdaDeducidaTexto(reg) {
     if (!reg || !(reg.horasDeducidasBanco > 0)) return "—";
+    if (reg.tipo === "a_cuenta_acumulado") return "1 día";
     return formatoHHMM(reg.horasDeducidasBanco);
   }
 
