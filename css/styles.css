@@ -376,14 +376,17 @@ body > #btn-instalar-app {
   margin-top: 1rem;
   border: 1px solid var(--border);
   border-radius: 8px;
+  position: relative;
 }
 .grid-table {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.82rem;
   white-space: nowrap;
 }
 .grid-table th, .grid-table td {
-  border: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   padding: 0.35rem 0.5rem;
   text-align: center;
 }
@@ -391,22 +394,87 @@ body > #btn-instalar-app {
   background: #f3f4f6;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 10;
 }
-.grid-table td:first-child, .grid-table th:first-child {
+
+/* Columnas fijas: N°, Empleado, Cargo */
+.grid-table th:nth-child(1),
+.grid-table td:nth-child(1) {
   position: sticky;
   left: 0;
+  min-width: 42px;
+  max-width: 42px;
+  width: 42px;
   background: #fff;
-  text-align: left;
-  z-index: 1;
-  min-width: 170px;
+  z-index: 5;
+  text-align: center;
 }
-.grid-table thead th:first-child { z-index: 2; background: #f3f4f6; }
+
+.grid-table th:nth-child(2),
+.grid-table td:nth-child(2) {
+  position: sticky;
+  left: 42px;
+  min-width: 170px;
+  max-width: 220px;
+  background: #fff;
+  z-index: 5;
+  text-align: left;
+}
+
+.grid-table th:nth-child(3),
+.grid-table td:nth-child(3) {
+  position: sticky;
+  left: 212px;
+  min-width: 115px;
+  max-width: 135px;
+  background: #fff;
+  z-index: 5;
+  text-align: left;
+  box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.12);
+}
+
+.grid-table thead th:nth-child(1),
+.grid-table thead th:nth-child(2),
+.grid-table thead th:nth-child(3) {
+  background: #f3f4f6;
+  z-index: 15;
+}
+
 .grid-table td.celda-normal { color: #1f2937; }
 .grid-table td.celda-vacia { color: #d1d5db; }
 .grid-table td.celda-deduccion { color: var(--danger); font-weight: 600; }
 .grid-table td.celda-especial { color: #6b7280; font-style: italic; }
 .grid-table td.resumen { background: #f9fafb; font-weight: 600; }
+
+/* ---------- Resaltado interactivo de filas a nivel de todo el sistema ---------- */
+.data-table tbody tr,
+.grid-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.data-table tbody tr:hover td,
+.grid-table tbody tr:hover td,
+.grid-table tbody tr:hover td:nth-child(1),
+.grid-table tbody tr:hover td:nth-child(2),
+.grid-table tbody tr:hover td:nth-child(3) {
+  background-color: #fff1f2;
+}
+
+.data-table tbody tr.fila-activa td,
+.grid-table tbody tr.fila-activa td,
+.grid-table tbody tr.fila-activa td:nth-child(1),
+.grid-table tbody tr.fila-activa td:nth-child(2),
+.grid-table tbody tr.fila-activa td:nth-child(3) {
+  background-color: #fee2e2 !important;
+  color: #111827;
+  font-weight: 500;
+}
+
+.data-table tbody tr.fila-activa td:first-child,
+.grid-table tbody tr.fila-activa td:first-child {
+  border-left: 3px solid var(--primary) !important;
+}
 
 /* ---------- Estados de vacaciones ---------- */
 .estado-badge {

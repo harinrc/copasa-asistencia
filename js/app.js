@@ -483,7 +483,7 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
       titulo,
       tituloColumna: 5,
       especialDesde: 3,
-      anchos: [6, 16.85546875, 43.140625, 20, 19.140625, 19.140625, 21.42578125, 17.5703125, 17.5703125, 26.140625],
+      anchos: [6, 16.85546875, 43.140625, 20, 19.140625, 19.140625, 23.5, 23.5, 17.5703125, 26.140625],
       columnas: COLUMNAS_REGISTRO_DIARIO,
       filas
     };

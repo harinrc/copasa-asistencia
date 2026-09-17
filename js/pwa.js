@@ -56,3 +56,18 @@ if (yaInstalada()) {
   const btn = document.getElementById("btn-instalar-app");
   if (btn) btn.hidden = true;
 }
+
+// Resaltar interactivamente la fila al hacer clic/tocar en cualquier tabla de la app
+document.addEventListener("click", (e) => {
+  if (e.target.closest("button, input, select, textarea, a, .icon-btn, .badge")) return;
+  const tr = e.target.closest("tbody tr");
+  if (!tr) return;
+  const tabla = tr.closest(".data-table, .grid-table");
+  if (!tabla) return;
+
+  const yaActiva = tr.classList.contains("fila-activa");
+  tabla.querySelectorAll("tbody tr.fila-activa").forEach(fila => fila.classList.remove("fila-activa"));
+  if (!yaActiva) {
+    tr.classList.add("fila-activa");
+  }
+});

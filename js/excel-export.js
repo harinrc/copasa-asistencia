@@ -193,6 +193,19 @@ async function exportarConPlantilla(hojas, nombreArchivo) {
     for (let numero = 3; numero <= filasExistentes; numero++) limpiarFila(ws.getRow(numero));
     normalizarCuerpoDiario(ws, 3);
     hoja.filas.forEach((fila, indice) => escribirFilaDiaria(ws, fila, indice + 3, 3));
+
+    // Asegurar que la barra roja de títulos tenga altura y ajuste de texto perfecto
+    const filaEncabezado = ws.getRow(2);
+    filaEncabezado.height = 36;
+    for (let c = 1; c <= 9; c++) {
+      const celda = filaEncabezado.getCell(c);
+      if (celda) celda.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+    }
+    const colG = ws.getColumn(7);
+    if (colG) colG.width = 23;
+    const colH = ws.getColumn(8);
+    if (colH) colH.width = 23;
+
     ws.views = [{ state: "frozen", ySplit: 2 }];
   });
 
@@ -328,12 +341,12 @@ export async function exportarExcelBonito(hojas, nombreArchivo) {
     columnas.forEach((c, i) => {
       const cell = filaEncabezado.getCell(i + 1);
       cell.value = c;
-      cell.font = { bold: true, size: 12, color: { argb: "FFFFFFFF" } };
+      cell.font = { bold: true, size: 11, color: { argb: "FFFFFFFF" } };
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR_ENCABEZADO } };
       cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
       cell.border = bordeSegunPosicion({ arriba: !titulo, izquierda: i === 0, derecha: i === ultimaColumna });
     });
-    filaEncabezado.height = 28;
+    filaEncabezado.height = 36;
     filaActual++;
 
     filas.forEach((fila, indiceDatos) => {
