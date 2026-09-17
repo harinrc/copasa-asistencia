@@ -275,9 +275,10 @@ body > #btn-instalar-app {
 .dia-menu-item:hover { background: #f3f4f6; }
 
 .container {
-  max-width: 1200px;
+  max-width: 1560px;
+  width: 100%;
   margin: 1.5rem auto;
-  padding: 0 1rem;
+  padding: 0 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -525,6 +526,49 @@ body > #btn-instalar-app {
   .card-header .btn-primary { width: 100%; text-align: center; }
 }
 
-@media (min-width: 1400px) {
-  .container { max-width: 1400px; }
+/* ---------- Ajuste para Registro Diario completo en PC ---------- */
+@media (min-width: 1080px) {
+  .scroll-hint { display: none !important; }
+  .table-scroll #tabla-registro-diario {
+    width: 100%;
+    min-width: 100%;
+  }
+  .table-scroll #tabla-registro-diario th,
+  .table-scroll #tabla-registro-diario td {
+    white-space: normal;
+    padding: 0.45rem 0.35rem;
+    font-size: 0.83rem;
+  }
+  .table-scroll #tabla-registro-diario th {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 1.15;
+  }
+  .table-scroll #tabla-registro-diario td:nth-child(1) { text-align: center; width: 32px; }
+  .table-scroll #tabla-registro-diario td:nth-child(2) { width: 110px; }
+  .table-scroll #tabla-registro-diario td:nth-child(3) { min-width: 135px; font-weight: 500; }
+  .table-scroll #tabla-registro-diario td:nth-child(4) { min-width: 120px; }
+  .table-scroll #tabla-registro-diario td:nth-child(5),
+  .table-scroll #tabla-registro-diario td:nth-child(6),
+  .table-scroll #tabla-registro-diario td:nth-child(7),
+  .table-scroll #tabla-registro-diario td:nth-child(8),
+  .table-scroll #tabla-registro-diario td:nth-child(9),
+  .table-scroll #tabla-registro-diario td:nth-child(10),
+  .table-scroll #tabla-registro-diario td:nth-child(11) {
+    text-align: center;
+    white-space: nowrap;
+  }
+  .table-scroll #tabla-registro-diario td:nth-child(11) {
+    font-weight: 600;
+  }
+  .table-scroll #tabla-registro-diario td:nth-child(12) {
+    min-width: 90px;
+    max-width: 160px;
+    word-break: break-word;
+  }
+  .table-scroll #tabla-registro-diario td:nth-child(13) {
+    text-align: center;
+    white-space: nowrap;
+    width: 65px;
+  }
 }
