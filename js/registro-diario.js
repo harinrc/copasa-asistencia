@@ -234,39 +234,51 @@ function renderRegistroDiario() {
   const fecha = getFechaRegistro();
   const tbody = document.querySelector("#tabla-registro-diario tbody");
   tbody.innerHTML = "";
-  const horarioHoy = horarioEsperado(fecha);
   const busqueda = document.getElementById("buscar-registro")?.value || "";
   empleados
     .filter(emp => coincideBusqueda(emp.nombre, busqueda) || coincideBusqueda(emp.cargo, busqueda))
     .forEach((emp, indice) => {
     const regReal = registros.find(r => r.employeeId === emp.id && r.fecha === fecha);
-    // Si nadie editó nada y es un día laboral normal, se asume "Normal" con el
-    // horario configurado aplicado automáticamente (0 horas de más/de menos).
-    const reg = regReal || (horarioHoy ? {
-      tipo: "normal", horaEntrada: horarioHoy.entrada, horaSalida: horarioHoy.salida,
-      llegadaTardeHoras: 0, salidaTempranoHoras: 0, horasAcumuladasEntrada: 0,
-      horasAcumuladasSalidas: 0, horasExtraPagadas: 0, horasDeducidasBanco: 0,
-      horasDeducidasSalario: 0, horasDeducidasVacaciones: 0, observaciones: ""
-    } : null);
-    const esAplicadoPorDefecto = !regReal && !!reg;
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${indice + 1}</td>
-      <td>${escapeHtml(emp.cargo || "")}</td>
-      <td>${escapeHtml(emp.nombre)}</td>
-      <td>${ETIQUETAS_TIPO[reg?.tipo] || "—"}${esAplicadoPorDefecto ? ` <span class="badge" style="background:#94a3b8;color:#fff;">por defecto</span>` : ""}${reg?.modoDiaEspecial ? ` <span class="badge" style="background:${reg.modoDiaEspecial === "banco" ? "#0ea5e9" : "#f59e0b"};color:#fff;">${reg.modoDiaEspecial === "banco" ? "control" : "salario"}</span>` : ""}${reg?.coberturaTardanza === "vacaciones" ? ` <span class="badge" style="background:#a855f7;color:#fff;">a cta. vacaciones</span>` : ""}${reg?.coberturaTardanza === "acumulado" ? ` <span class="badge" style="background:#0ea5e9;color:#fff;">a cta. acumulado</span>` : ""}${reg?.constanciaMedica ? ` <span class="badge" style="background:var(--primary-dark);color:#fff;">constancia médica</span>` : ""}</td>
-      <td>${reg?.horaEntrada || "—"}</td>
-      <td>${reg?.horaSalida || "—"}</td>
-      <td>${formatoHHMM(reg?.llegadaTardeHoras || 0)}</td>
-      <td>${formatoHHMM(reg?.salidaTempranoHoras || 0)}</td>
-      <td>${formatoHHMM(reg?.horasAcumuladasEntrada || 0)}</td>
-      <td>${formatoHHMM(reg?.horasAcumuladasSalidas || 0)}</td>
-      <td>${formatoHHMM((reg?.horasAcumuladasEntrada || 0) + (reg?.horasAcumuladasSalidas || 0) - (reg?.horasDeducidasBanco || 0))}</td>
-      <td>${escapeHtml(reg?.observaciones || "")}</td>
-      <td class="admin-only">
-        <button class="icon-btn edit" data-action="editar-registro" data-emp="${emp.id}" data-fecha="${fecha}">✏️</button>
-        ${regReal ? `<button class="icon-btn delete" data-action="eliminar-registro" data-id="${regReal.id}">🗑️</button>` : ""}
-      </td>`;
+
+    if (!regReal) {
+      tr.innerHTML = `
+        <td>${indice + 1}</td>
+        <td>${escapeHtml(emp.cargo || "")}</td>
+        <td>${escapeHtml(emp.nombre)}</td>
+        <td><span class="badge" style="background:#e5e7eb;color:#6b7280;">Sin registro</span></td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td>—</td>
+        <td class="admin-only">
+          <button class="icon-btn edit" data-action="editar-registro" data-emp="${emp.id}" data-fecha="${fecha}" title="Registrar asistencia">✏️</button>
+        </td>`;
+    } else {
+      const reg = regReal;
+      const totalDia = (reg.horasAcumuladasEntrada || 0) + (reg.horasAcumuladasSalidas || 0) - (reg.horasDeducidasBanco || 0);
+      tr.innerHTML = `
+        <td>${indice + 1}</td>
+        <td>${escapeHtml(emp.cargo || "")}</td>
+        <td>${escapeHtml(emp.nombre)}</td>
+        <td>${ETIQUETAS_TIPO[reg.tipo] || "—"}${reg.modoDiaEspecial ? ` <span class="badge" style="background:${reg.modoDiaEspecial === "banco" ? "#0ea5e9" : "#f59e0b"};color:#fff;">${reg.modoDiaEspecial === "banco" ? "control" : "salario"}</span>` : ""}${reg.coberturaTardanza === "vacaciones" ? ` <span class="badge" style="background:#a855f7;color:#fff;">a cta. vacaciones</span>` : ""}${reg.coberturaTardanza === "acumulado" ? ` <span class="badge" style="background:#0ea5e9;color:#fff;">a cta. acumulado</span>` : ""}${reg.constanciaMedica ? ` <span class="badge" style="background:var(--primary-dark);color:#fff;">constancia médica</span>` : ""}</td>
+        <td>${reg.horaEntrada || "—"}</td>
+        <td>${reg.horaSalida || "—"}</td>
+        <td>${(reg.llegadaTardeHoras || 0) > 0 ? formatoHHMM(reg.llegadaTardeHoras) : "—"}</td>
+        <td>${(reg.salidaTempranoHoras || 0) > 0 ? formatoHHMM(reg.salidaTempranoHoras) : "—"}</td>
+        <td>${(reg.horasAcumuladasEntrada || 0) > 0 ? formatoHHMM(reg.horasAcumuladasEntrada) : "—"}</td>
+        <td>${(reg.horasAcumuladasSalidas || 0) > 0 ? formatoHHMM(reg.horasAcumuladasSalidas) : "—"}</td>
+        <td>${formatoHHMM(totalDia)}</td>
+        <td>${escapeHtml(reg.observaciones || "")}</td>
+        <td class="admin-only">
+          <button class="icon-btn edit" data-action="editar-registro" data-emp="${emp.id}" data-fecha="${fecha}" title="Editar">✏️</button>
+          <button class="icon-btn delete" data-action="eliminar-registro" data-id="${reg.id}" title="Eliminar">🗑️</button>
+        </td>`;
+    }
     tbody.appendChild(tr);
   });
   document.querySelectorAll("#tabla-registro-diario .admin-only").forEach(el => el.style.display = isAdmin ? "" : "none");

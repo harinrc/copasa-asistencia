@@ -434,15 +434,8 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
   const fechasPeriodo = listarFechas(desde, hasta);
   const nombresUsados = new Set();
   const hojasPorDia = fechasPeriodo.map(fecha => {
-    const horarioHoy = horarioEsperado(fecha);
     const filas = empleados.filter(e => e.activo !== false).map((emp, indice) => {
-      const regReal = registros.find(r => r.employeeId === emp.id && r.fecha === fecha);
-      const reg = regReal || (horarioHoy ? {
-        tipo: "normal", horaEntrada: horarioHoy.entrada, horaSalida: horarioHoy.salida,
-        llegadaTardeHoras: 0, salidaTempranoHoras: 0, horasAcumuladasEntrada: 0,
-        horasAcumuladasSalidas: 0, horasExtraPagadas: 0, horasDeducidasBanco: 0,
-        horasDeducidasSalario: 0, horasDeducidasVacaciones: 0, observaciones: ""
-      } : null);
+      const reg = registros.find(r => r.employeeId === emp.id && r.fecha === fecha);
 
       // Días especiales (Subsidio, A cuenta de acumulado, Falta, Permiso,
       // Vacaciones) se muestran como una franja de color de una sola línea,
@@ -456,17 +449,34 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
         };
       }
 
+      // Registro normal guardado
+      if (reg && reg.tipo === "normal") {
+        return {
+          "N°": indice + 1,
+          "Cargo": emp.cargo || "",
+          "Nombre": emp.nombre,
+          "Entrada": reg.horaEntrada ? formatoHora12(reg.horaEntrada) : "—",
+          "Salida": reg.horaSalida ? formatoHora12(reg.horaSalida) : "—",
+          "Llegada Tarde": (reg.llegadaTardeHoras || 0) > 0 ? formatoHHMM(reg.llegadaTardeHoras) : "—",
+          "HORAS ACUMULADAS ENTRADA": (reg.horasAcumuladasEntrada || 0) > 0 ? formatoHHMM(reg.horasAcumuladasEntrada) : "—",
+          "HORAS ACUMULADAS SALIDAS": (reg.horasAcumuladasSalidas || 0) > 0 ? formatoHHMM(reg.horasAcumuladasSalidas) : "—",
+          "Total": formatoHHMM(gananciaBanco(reg) - (reg.horasDeducidasBanco || 0)),
+          "Observaciones": reg.observaciones || ""
+        };
+      }
+
+      // Sin registro guardado en la base de datos para este día
       return {
         "N°": indice + 1,
         "Cargo": emp.cargo || "",
         "Nombre": emp.nombre,
-        "Entrada": reg?.horaEntrada ? formatoHora12(reg.horaEntrada) : "—",
-        "Salida": reg?.horaSalida ? formatoHora12(reg.horaSalida) : "—",
-        "Llegada Tarde": formatoHHMM(reg?.llegadaTardeHoras || 0),
-        "HORAS ACUMULADAS ENTRADA": formatoHHMM(reg?.horasAcumuladasEntrada || 0),
-        "HORAS ACUMULADAS SALIDAS": formatoHHMM(reg?.horasAcumuladasSalidas || 0),
-        "Total": formatoHHMM(gananciaBanco(reg || {}) - (reg?.horasDeducidasBanco || 0)),
-        "Observaciones": reg?.observaciones || ""
+        "Entrada": "—",
+        "Salida": "—",
+        "Llegada Tarde": "—",
+        "HORAS ACUMULADAS ENTRADA": "—",
+        "HORAS ACUMULADAS SALIDAS": "—",
+        "Total": "—",
+        "Observaciones": ""
       };
     });
 
