@@ -461,7 +461,9 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
           "HORAS ACUMULADAS ENTRADA": formatoHHMM(reg.horasAcumuladasEntrada || 0),
           "HORAS ACUMULADAS SALIDAS": formatoHHMM(reg.horasAcumuladasSalidas || 0),
           "Total": formatoHHMM(gananciaBanco(reg) - (reg.horasDeducidasBanco || 0)),
-          "Observaciones": reg.observaciones || ""
+          "Observaciones": reg.observaciones || "",
+          _llegadaTarde: (reg.llegadaTardeHoras || 0) > 0,
+          _salidaTemprano: (reg.salidaTempranoHoras || 0) > 0
         };
       }
 

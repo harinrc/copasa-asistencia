@@ -168,6 +168,19 @@ function escribirFilaDiaria(ws, datos, numero, plantillaFila) {
     especial.value = datos._especial.texto;
     especial.fill = { type: "pattern", pattern: "solid", fgColor: { argb: datos._especial.color } };
     especial.font = { name: "Arial", size: 10, bold: false, color: { argb: "FF000000" } };
+  } else {
+    // Si llegó tarde, pintar la celda de Entrada (columna 3) en rojo
+    if (datos._llegadaTarde) {
+      const celdaEntrada = filaExcel.getCell(3);
+      celdaEntrada.font = { name: "Arial", size: 10, bold: true, color: { argb: "FFB71C1C" } };
+      celdaEntrada.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
+    }
+    // Si salió temprano, pintar la celda de Salida (columna 4) en rojo
+    if (datos._salidaTemprano) {
+      const celdaSalida = filaExcel.getCell(4);
+      celdaSalida.font = { name: "Arial", size: 10, bold: true, color: { argb: "FFB71C1C" } };
+      celdaSalida.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
+    }
   }
 }
 
@@ -385,6 +398,14 @@ export async function exportarExcelBonito(hojas, nombreArchivo) {
           cell.alignment = { vertical: "middle", horizontal: "center" };
           if (indiceDatos % 2 === 1) {
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLOR_FRANJA } };
+          }
+          if (c === "Entrada" && fila._llegadaTarde) {
+            cell.font = { size: 11, bold: true, color: { argb: "FFB71C1C" } };
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
+          }
+          if (c === "Salida" && fila._salidaTemprano) {
+            cell.font = { size: 11, bold: true, color: { argb: "FFB71C1C" } };
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
           }
         });
       }
