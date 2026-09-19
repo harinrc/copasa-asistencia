@@ -361,13 +361,34 @@ body > #btn-instalar-app {
   min-width: 0;
 }
 .table-scroll .data-table {
-  width: max-content;
+  width: 100%;
   min-width: max-content;
   margin-top: 0;
 }
 .table-scroll .data-table th,
 .table-scroll .data-table td {
   white-space: nowrap;
+}
+
+/* Scroll vertical con encabezados fijos (para tablas largas en Dashboard y reportes) */
+.table-scroll-vertical {
+  max-height: 480px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  position: relative;
+}
+.table-scroll-vertical .data-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.table-scroll-vertical .data-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  z-index: 5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-bottom: 2px solid var(--border);
 }
 
 /* ---------- Cuadrícula día por día (reportes.html) ---------- */
