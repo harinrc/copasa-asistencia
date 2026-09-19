@@ -530,6 +530,8 @@ body > #btn-instalar-app {
 .icon-btn:hover { background: rgba(0,0,0,0.06); }
 .icon-btn.edit { color: var(--primary); }
 .icon-btn.delete { color: var(--danger); }
+.icon-btn.quick-apply { color: #16a34a; font-size: 1.1rem; }
+.icon-btn.quick-apply:hover { background: #dcfce7; }
 
 .data-table td:last-child,
 .data-table th:last-child {

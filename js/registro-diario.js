@@ -5,7 +5,7 @@ import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   collection, doc, addDoc, deleteDoc, setDoc, getDoc,
-  onSnapshot, query, orderBy, serverTimestamp
+  onSnapshot, query, orderBy, serverTimestamp, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { formatoHHMM, parseHHMM, fechaLocalHoy, ordenarEmpleados, coincideBusqueda } from "./formato.js";
 
@@ -223,6 +223,75 @@ document.getElementById("btn-quitar-feriado")?.addEventListener("click", async (
   }
 });
 
+document.getElementById("btn-marcar-todos-normal")?.addEventListener("click", async () => {
+  const fecha = getFechaRegistro();
+  const horarioHoy = horarioEsperado(fecha);
+  if (!horarioHoy) {
+    return alert("Este día es domingo o feriado, no tiene horario laboral estándar configurado.");
+  }
+  const pendientes = empleados.filter(emp => !registros.some(r => r.employeeId === emp.id && r.fecha === fecha));
+  if (pendientes.length === 0) {
+    return alert("Todos los colaboradores ya tienen registro para esta fecha.");
+  }
+  if (!confirm(`¿Aplicar horario estándar (${horarioHoy.entrada} a ${horarioHoy.salida}) a los ${pendientes.length} colaboradores pendientes del ${fecha}?`)) {
+    return;
+  }
+
+  const btn = document.getElementById("btn-marcar-todos-normal");
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Aplicando...";
+  try {
+    const batch = writeBatch(db);
+    pendientes.forEach(emp => {
+      const docRef = doc(db, "registros", `${emp.id}_${fecha}`);
+      batch.set(docRef, {
+        employeeId: emp.id,
+        employeeNombre: emp.nombre,
+        fecha,
+        tipo: "normal",
+        horaEntrada: horarioHoy.entrada,
+        horaSalida: horarioHoy.salida,
+        modoDiaEspecial: "",
+        coberturaTardanza: "",
+        constanciaMedica: false,
+        llegadaTardeHoras: 0,
+        salidaTempranoHoras: 0,
+        horasAcumuladasEntrada: 0,
+        horasAcumuladasSalidas: 0,
+        horasExtraPagadas: 0,
+        horasDeducidasBanco: 0,
+        horasDeducidasSalario: 0,
+        horasDeducidasVacaciones: 0,
+        observaciones: "",
+        actualizadoEn: serverTimestamp(),
+        actualizadoPor: currentUser?.email || "admin"
+      });
+    });
+    await batch.commit();
+  } catch (err) {
+    console.error(err);
+    alert("Error al aplicar horario: " + (err?.message || err));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
+});
+
+document.getElementById("btn-limpiar-dia")?.addEventListener("click", async () => {
+  document.getElementById("dia-menu-panel").hidden = true;
+  const fecha = getFechaRegistro();
+  const delDia = registros.filter(r => r.fecha === fecha);
+  if (delDia.length === 0) return alert("No hay registros guardados en esta fecha.");
+  if (!confirm(`¿Estás seguro de limpiar los ${delDia.length} registros del día ${fecha}? Volverán a quedar en 'Sin registro'.`)) return;
+
+  const batch = writeBatch(db);
+  delDia.forEach(r => {
+    batch.delete(doc(db, "registros", r.id));
+  });
+  await batch.commit();
+});
+
 function getFechaRegistro() {
   const input = document.getElementById("registro-fecha");
   if (!input.value) input.value = fechaLocalHoy();
@@ -256,7 +325,8 @@ function renderRegistroDiario() {
         <td>—</td>
         <td>—</td>
         <td class="admin-only">
-          <button class="icon-btn edit" data-action="editar-registro" data-emp="${emp.id}" data-fecha="${fecha}" title="Registrar asistencia">✏️</button>
+          <button class="icon-btn quick-apply" data-action="aplicar-estandar" data-emp="${emp.id}" data-fecha="${fecha}" title="Aplicar horario estándar en 1 clic">⚡</button>
+          <button class="icon-btn edit" data-action="editar-registro" data-emp="${emp.id}" data-fecha="${fecha}" title="Editar o registrar excepción">✏️</button>
         </td>`;
     } else {
       const reg = regReal;
@@ -382,6 +452,37 @@ document.addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
 
+  if (btn.dataset.action === "aplicar-estandar") {
+    const emp = empleados.find(x => x.id === btn.dataset.emp);
+    const fecha = btn.dataset.fecha;
+    const horarioHoy = horarioEsperado(fecha);
+    if (!horarioHoy) {
+      return alert("Este día es domingo o feriado, no tiene horario laboral estándar configurado. Usa el botón ✏️ para registrar la jornada.");
+    }
+    const data = {
+      employeeId: emp.id,
+      employeeNombre: emp.nombre,
+      fecha,
+      tipo: "normal",
+      horaEntrada: horarioHoy.entrada,
+      horaSalida: horarioHoy.salida,
+      modoDiaEspecial: "",
+      coberturaTardanza: "",
+      constanciaMedica: false,
+      llegadaTardeHoras: 0,
+      salidaTempranoHoras: 0,
+      horasAcumuladasEntrada: 0,
+      horasAcumuladasSalidas: 0,
+      horasExtraPagadas: 0,
+      horasDeducidasBanco: 0,
+      horasDeducidasSalario: 0,
+      horasDeducidasVacaciones: 0,
+      observaciones: "",
+      actualizadoEn: serverTimestamp(),
+      actualizadoPor: currentUser?.email || "admin"
+    };
+    await setDoc(doc(db, "registros", `${emp.id}_${fecha}`), data);
+  }
   if (btn.dataset.action === "editar-registro") {
     const emp = empleados.find(x => x.id === btn.dataset.emp);
     const fecha = btn.dataset.fecha;

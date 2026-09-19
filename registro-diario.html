@@ -58,20 +58,20 @@
           <input type="date" id="registro-fecha" />
           <button id="btn-dia-siguiente" class="btn-secondary" title="Día siguiente">→</button>
           <button id="btn-dia-hoy" class="btn-secondary">Hoy</button>
+          <button id="btn-marcar-todos-normal" class="btn-primary admin-only" title="Aplica el horario estándar a todos los colaboradores sin registro" style="font-size:0.83rem;padding:0.4rem 0.75rem;white-space:nowrap;">⚡ Marcar todos normal</button>
           <div class="dia-menu admin-only">
             <button id="btn-dia-menu" class="btn-secondary" title="Más opciones de este día">⋮</button>
             <div id="dia-menu-panel" class="dia-menu-panel" hidden>
               <button type="button" id="btn-marcar-feriado" class="dia-menu-item">📅 Marcar este día como feriado</button>
               <button type="button" id="btn-quitar-feriado" class="dia-menu-item" hidden>🗑️ Quitar feriado de este día</button>
+              <button type="button" id="btn-limpiar-dia" class="dia-menu-item" style="color:var(--danger);">🗑️ Limpiar todos los registros del día</button>
             </div>
           </div>
         </div>
       </div>
       <p id="temporada-indicador" class="auth-hint" style="text-align:left;margin:0.5rem 0;"></p>
       <p class="auth-hint" style="text-align:left;margin:0 0 0.5rem;">
-        Registra la asistencia del día (horario de entrada y salida o excepciones).
-        Los colaboradores sin registro guardado se mostrarán con <strong>Sin registro</strong> y guiones "—"
-        hasta que guardes su jornada con el botón ✏️.
+        Registra la asistencia del día. Puedes tocar <strong>⚡ Marcar todos normal</strong> para registrar a todo el personal en 1 clic con el horario estándar, o usar el botón <strong>⚡</strong> en cada colaborador. Usa <strong>✏️</strong> solo para editar a quienes tuvieron tardanzas o excepciones (vacaciones, subsidio, permisos, etc.).
       </p>
       <div class="search-bar">
         <label for="buscar-registro">Buscar por nombre o cargo</label>
