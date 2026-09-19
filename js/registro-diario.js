@@ -330,18 +330,19 @@ function renderRegistroDiario() {
         </td>`;
     } else {
       const reg = regReal;
+      const esNormal = reg.tipo === "normal";
       const totalDia = (reg.horasAcumuladasEntrada || 0) + (reg.horasAcumuladasSalidas || 0) - (reg.horasDeducidasBanco || 0);
       tr.innerHTML = `
         <td>${indice + 1}</td>
         <td>${escapeHtml(emp.cargo || "")}</td>
         <td>${escapeHtml(emp.nombre)}</td>
         <td>${ETIQUETAS_TIPO[reg.tipo] || "—"}${reg.modoDiaEspecial ? ` <span class="badge" style="background:${reg.modoDiaEspecial === "banco" ? "#0ea5e9" : "#f59e0b"};color:#fff;">${reg.modoDiaEspecial === "banco" ? "control" : "salario"}</span>` : ""}${reg.coberturaTardanza === "vacaciones" ? ` <span class="badge" style="background:#a855f7;color:#fff;">a cta. vacaciones</span>` : ""}${reg.coberturaTardanza === "acumulado" ? ` <span class="badge" style="background:#0ea5e9;color:#fff;">a cta. acumulado</span>` : ""}${reg.constanciaMedica ? ` <span class="badge" style="background:var(--primary-dark);color:#fff;">constancia médica</span>` : ""}</td>
-        <td>${reg.horaEntrada || "—"}</td>
-        <td>${reg.horaSalida || "—"}</td>
-        <td>${(reg.llegadaTardeHoras || 0) > 0 ? formatoHHMM(reg.llegadaTardeHoras) : "—"}</td>
-        <td>${(reg.salidaTempranoHoras || 0) > 0 ? formatoHHMM(reg.salidaTempranoHoras) : "—"}</td>
-        <td>${(reg.horasAcumuladasEntrada || 0) > 0 ? formatoHHMM(reg.horasAcumuladasEntrada) : "—"}</td>
-        <td>${(reg.horasAcumuladasSalidas || 0) > 0 ? formatoHHMM(reg.horasAcumuladasSalidas) : "—"}</td>
+        <td>${reg.horaEntrada || (esNormal ? "—" : "—")}</td>
+        <td>${reg.horaSalida || (esNormal ? "—" : "—")}</td>
+        <td>${esNormal ? formatoHHMM(reg.llegadaTardeHoras || 0) : "—"}</td>
+        <td>${esNormal ? formatoHHMM(reg.salidaTempranoHoras || 0) : "—"}</td>
+        <td>${esNormal ? formatoHHMM(reg.horasAcumuladasEntrada || 0) : "—"}</td>
+        <td>${esNormal ? formatoHHMM(reg.horasAcumuladasSalidas || 0) : "—"}</td>
         <td>${formatoHHMM(totalDia)}</td>
         <td>${escapeHtml(reg.observaciones || "")}</td>
         <td class="admin-only">

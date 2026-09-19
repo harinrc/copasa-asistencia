@@ -457,9 +457,9 @@ document.getElementById("btn-exportar").addEventListener("click", async () => {
           "Nombre": emp.nombre,
           "Entrada": reg.horaEntrada ? formatoHora12(reg.horaEntrada) : "—",
           "Salida": reg.horaSalida ? formatoHora12(reg.horaSalida) : "—",
-          "Llegada Tarde": (reg.llegadaTardeHoras || 0) > 0 ? formatoHHMM(reg.llegadaTardeHoras) : "—",
-          "HORAS ACUMULADAS ENTRADA": (reg.horasAcumuladasEntrada || 0) > 0 ? formatoHHMM(reg.horasAcumuladasEntrada) : "—",
-          "HORAS ACUMULADAS SALIDAS": (reg.horasAcumuladasSalidas || 0) > 0 ? formatoHHMM(reg.horasAcumuladasSalidas) : "—",
+          "Llegada Tarde": formatoHHMM(reg.llegadaTardeHoras || 0),
+          "HORAS ACUMULADAS ENTRADA": formatoHHMM(reg.horasAcumuladasEntrada || 0),
+          "HORAS ACUMULADAS SALIDAS": formatoHHMM(reg.horasAcumuladasSalidas || 0),
           "Total": formatoHHMM(gananciaBanco(reg) - (reg.horasDeducidasBanco || 0)),
           "Observaciones": reg.observaciones || ""
         };
